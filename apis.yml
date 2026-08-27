@@ -1,0 +1,56 @@
+name: Pexafy
+description: >-
+  Semantic (meaning-based) search engine over free-license stock photography. A single request queries 9 free
+  stock-photo libraries (Unsplash, Pexels, Pixabay, StockSnap, Picjumbo, Kaboompics, Burst, Skitterphoto, NegativeSpace;
+  9M+ images) and normalizes results into one JSON schema. Supports natural-language queries in 23 languages,
+  image-to-image search, and filtering by color, orientation, license, source, photographer, and date.
+url: https://raw.githubusercontent.com/api-evangelist/pexafy/refs/heads/main/apis.yml
+created: '2026-08-27'
+modified: '2026-08-27'
+specificationVersion: '0.21'
+tags:
+  - images
+  - photos
+  - stock photos
+  - image search
+  - semantic search
+  - computer vision
+  - embeddings
+  - MCP
+  - agent-native
+apis:
+  - name: Pexafy API
+    description: >-
+      REST API for semantic stock-photo search across 9 free libraries, with text and image-to-image search, facets,
+      collections, and usage endpoints. Auth via x-api-key header.
+    humanURL: https://docs.pexafy.com
+    baseURL: https://api.pexafy.com
+    tags:
+      - images
+      - photos
+      - stock photos
+      - image search
+      - semantic search
+      - computer vision
+      - embeddings
+      - MCP
+      - agent-native
+    properties:
+      - type: OpenAPI
+        url: https://api.pexafy.com/openapi.json
+      - type: Documentation
+        url: https://docs.pexafy.com
+      - type: LLMsTxt
+        url: https://pexafy.com/llms.txt
+      - type: LLMsTxt
+        url: https://docs.pexafy.com/llms.txt
+      - type: MCPServer
+        url: https://mcp.pexafy.com/mcp
+maintainers:
+  - FN: Pexafy
+    url: https://pexafy.com
+generated:
+  by: apis.io/add
+  model: claude-opus-4-8
+  confidence: 98
+  at: '2026-08-27T15:59:46.281Z'
