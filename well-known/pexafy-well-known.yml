@@ -1,0 +1,119 @@
+generated: '2026-08-27'
+method: searched
+source: direct GET of each /.well-known/ path on every host in apis.yml and the OpenAPI servers[]
+note: >-
+  pexafy.com and docs.pexafy.com return HTML 404 pages (48-66 KB) for unserved
+  /.well-known/ paths, so a status code alone is not a hit here; only the five documents
+  below returned JSON that parsed and was saved. api.pexafy.com and mcp.pexafy.com return
+  honest JSON/text 404s.
+hit_count: 5
+hosts:
+- host: https://pexafy.com
+  documents:
+  - path: /.well-known/oauth-authorization-server
+    status: 200
+    file: pexafy-oauth-authorization-server.json
+  - path: /.well-known/apis.json
+    status: 200
+    file: null
+    note: >-
+      APIs.json 0.21 index, byte-identical in substance to this repo's apis.yml — the
+      provider self-publishes the same document. Not re-saved as a raw file to avoid two
+      copies of the same index in one repo.
+  - path: /.well-known/api-onboarding
+    status: 200
+    file: pexafy-api-onboarding.json
+    note: AID / api-onboarding descriptor 0.1 — self-serve maturity, agentPolicy allowed.
+  - path: /.well-known/tdmrep.json
+    status: 200
+    file: pexafy-tdmrep.json
+    note: >-
+      TDM Reservation Protocol (EU DSM Directive Art. 4). tdm-reservation 0 on the site
+      root; tdm-reservation 1 with a tdm-policy on /photos/ and its 22 localised variants.
+  - path: /.well-known/security.txt
+    status: 404
+  - path: /.well-known/openid-configuration
+    status: 404
+  - path: /.well-known/oauth-protected-resource
+    status: 404
+  - path: /.well-known/api-catalog
+    status: 404
+  - path: /.well-known/ai-plugin.json
+    status: 404
+  - path: /.well-known/agent-card.json
+    status: 404
+  - path: /.well-known/agent.json
+    status: 404
+- host: https://mcp.pexafy.com
+  documents:
+  - path: /.well-known/oauth-protected-resource
+    status: 200
+    file: pexafy-mcp-oauth-protected-resource.json
+    note: >-
+      RFC 9728 protected-resource metadata for the MCP endpoint; also served at the
+      resource-scoped path /.well-known/oauth-protected-resource/mcp (200), which is the
+      path the 401 WWW-Authenticate header on POST /mcp points at.
+  - path: /.well-known/security.txt
+    status: 404
+  - path: /.well-known/openid-configuration
+    status: 404
+  - path: /.well-known/oauth-authorization-server
+    status: 404
+  - path: /.well-known/api-catalog
+    status: 404
+  - path: /.well-known/ai-plugin.json
+    status: 404
+  - path: /.well-known/agent-card.json
+    status: 404
+  - path: /.well-known/agent.json
+    status: 404
+- host: https://api.pexafy.com
+  documents:
+  - path: /.well-known/security.txt
+    status: 404
+  - path: /.well-known/openid-configuration
+    status: 404
+  - path: /.well-known/oauth-authorization-server
+    status: 404
+  - path: /.well-known/oauth-protected-resource
+    status: 404
+  - path: /.well-known/api-catalog
+    status: 404
+  - path: /.well-known/ai-plugin.json
+    status: 404
+  - path: /.well-known/agent-card.json
+    status: 404
+  - path: /.well-known/agent.json
+    status: 404
+- host: https://docs.pexafy.com
+  documents:
+  - path: /.well-known/security.txt
+    status: null
+    note: connection did not complete on the single bounded attempt; not retried
+  - path: /.well-known/openid-configuration
+    status: 404
+  - path: /.well-known/oauth-authorization-server
+    status: 404
+  - path: /.well-known/oauth-protected-resource
+    status: 404
+  - path: /.well-known/api-catalog
+    status: 404
+  - path: /.well-known/ai-plugin.json
+    status: 404
+  - path: /.well-known/agent-card.json
+    status: 404
+  - path: /.well-known/agent.json
+    status: 404
+adjacent_discovery:
+- path: /robots.txt
+  host: https://pexafy.com
+  status: 200
+  note: >-
+    Carries per-agent Content-Signal directives (search / ai-input / ai-train), a
+    named allow-list for OAI-SearchBot, Claude-SearchBot, PerplexityBot, Applebot,
+    DuckAssistBot, ChatGPT-User, Claude-User and Perplexity-User, and a deny-list for
+    commercial SEO scrapers. /photos/ is disallowed for indexing crawlers.
+- path: /robots.txt
+  host: https://docs.pexafy.com
+  status: 200
+  note: "Content-Signal: search=yes,ai-input=yes,ai-train=yes on the docs host — docs are explicitly open to training."

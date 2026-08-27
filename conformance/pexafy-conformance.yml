@@ -1,0 +1,137 @@
+generated: '2026-08-27'
+method: searched
+source: openapi/pexafy-api-openapi.json, openapi/pexafy-api-v1-openapi.json
+additional_sources:
+- https://pexafy.com/.well-known/oauth-authorization-server
+- https://mcp.pexafy.com/.well-known/oauth-protected-resource
+- https://pexafy.com/.well-known/tdmrep.json
+- https://pexafy.com/.well-known/api-onboarding
+- https://pexafy.com/robots.txt
+- https://pexafy.com/legal/privacy/
+standards:
+- id: openapi-3.1
+  conforms: true
+  evidence: 'Both published documents declare openapi: 3.1.0.'
+- id: oauth2
+  conforms: true
+  evidence: RFC 6749 authorization-code + refresh_token grants advertised at https://pexafy.com/.well-known/oauth-authorization-server
+- id: oauth2-pkce
+  conforms: true
+  evidence: 'code_challenge_methods_supported: ["S256"] in the authorization-server metadata'
+- id: rfc8414-oauth-authorization-server-metadata
+  conforms: true
+  evidence: https://pexafy.com/.well-known/oauth-authorization-server returns 200 with issuer, authorization_endpoint, token_endpoint, registration_endpoint, revocation_endpoint, introspection_endpoint
+- id: rfc7591-dynamic-client-registration
+  conforms: true
+  evidence: 'registration_endpoint: https://pexafy.com/oauth/register — the MCP connector flow depends on it (clients register themselves, no manual credential exchange)'
+- id: rfc7009-token-revocation
+  conforms: true
+  evidence: 'revocation_endpoint: https://pexafy.com/oauth/revoke_token/'
+- id: rfc7662-token-introspection
+  conforms: true
+  evidence: 'introspection_endpoint: https://pexafy.com/oauth/introspect/'
+- id: rfc9728-oauth-protected-resource-metadata
+  conforms: true
+  evidence: https://mcp.pexafy.com/.well-known/oauth-protected-resource returns 200 and the 401 on tools/list carries a WWW-Authenticate Bearer challenge naming the resource_metadata URL
+- id: oidc
+  conforms: false
+  evidence: /.well-known/openid-configuration 404s on every host; the authorization server issues OAuth access tokens, not OIDC id_tokens
+- id: rfc9457-problem-details
+  conforms: false
+  evidence: >-
+    Errors use a custom success/data/meta/error envelope on application/json. No
+    application/problem+json anywhere in either spec. See errors/pexafy-problem-types.yml.
+- id: rfc9116-security-txt
+  conforms: false
+  evidence: /.well-known/security.txt returns 404 on pexafy.com, api.pexafy.com and mcp.pexafy.com
+- id: rfc8594-sunset-header
+  conforms: false
+  evidence: No Sunset or Deprecation headers observed; no deprecated operations in either spec
+- id: cursor-pagination
+  conforms: true
+  evidence: 'Documented cursor scheme with per_page / cursor request params and pagination.{per_page,has_more,next_cursor} response fields — https://docs.pexafy.com/pagination'
+- id: idempotency
+  conforms: false
+  evidence: No Idempotency-Key parameter in either spec and no mention in the docs. See conventions/pexafy-conventions.yml.
+- id: rate-limit-headers
+  conforms: partial
+  evidence: >-
+    Returns lowercase X-RateLimit-Limit / -Remaining / -Reset (the de-facto convention),
+    observed live. Does NOT implement the IETF draft RateLimit / RateLimit-Policy fields.
+- id: model-context-protocol
+  conforms: true
+  evidence: >-
+    Hosted streamable-http MCP server at https://mcp.pexafy.com/mcp, listed in the official
+    MCP registry as com.pexafy/pexafy-mcp with a 2025-12-11 server.json schema.
+- id: a2a-agent-card
+  conforms: false
+  evidence: /.well-known/agent-card.json and /.well-known/agent.json both 404 on all four hosts
+- id: llms-txt
+  conforms: true
+  evidence: /llms.txt served on pexafy.com (200) and docs.pexafy.com (200), plus llms-full.txt on the docs host
+- id: gdpr
+  conforms: true
+  evidence: >-
+    The privacy policy publishes an Article 6 legal-basis table and the full data-subject
+    rights list with a named request route (email with subject "GDPR Request") —
+    https://pexafy.com/legal/privacy/
+  note: >-
+    A published GDPR posture, not a certification. No Compliance pointer is emitted for
+    this provider: there is no SOC 2, ISO 27001, PCI DSS, HIPAA or FedRAMP claim anywhere,
+    no trust centre (trust.pexafy.com does not resolve) and no compliance page, so wiring
+    `type: Compliance` at the privacy policy would credit a compliance programme that does
+    not exist.
+domain_standards:
+- id: tdmrep
+  name: TDM Reservation Protocol (W3C CG / EU DSM Directive Art. 4)
+  conforms: true
+  evidence: >-
+    https://pexafy.com/.well-known/tdmrep.json returns a 24-entry array — tdm-reservation 0
+    on the site root, tdm-reservation 1 with tdm-policy https://pexafy.com/legal/licenses/
+    on /photos/ and each of its 22 localised variants.
+  why_it_matters: >-
+    This is the domain standard for Pexafy's actual market. A stock-photo aggregator's
+    product IS a rights-bearing image catalogue, and TDMRep is the machine-readable way a
+    rights holder reserves text-and-data-mining rights per URL prefix. A buyer whose crawler
+    already reads TDMRep gets the reservation for free; one that does not needs a bilateral
+    agreement.
+  spec_location: /.well-known/tdmrep.json
+- id: content-signal
+  name: Content Signals (robots.txt Content-Signal directive)
+  conforms: true
+  evidence: >-
+    https://pexafy.com/robots.txt carries per-agent Content-Signal directives —
+    search=yes,ai-input=yes,ai-train=yes for the default group and Applebot-Extended /
+    meta-externalagent / meta-webindexer / Amzn-SearchBot, and search=yes,ai-input=yes,
+    ai-train=no for OAI-SearchBot, Claude-SearchBot, PerplexityBot, Applebot and
+    DuckAssistBot. https://docs.pexafy.com/robots.txt declares ai-train=yes for the docs.
+  why_it_matters: >-
+    Two hosts, two deliberately different AI-usage postures — training allowed on the
+    developer docs, reserved on the image catalogue — expressed in the format crawlers read
+    rather than in prose.
+  spec_location: /robots.txt
+- id: api-onboarding-aod
+  name: API Onboarding Descriptor (aod 0.1)
+  conforms: true
+  evidence: >-
+    https://pexafy.com/.well-known/api-onboarding returns aod 0.1 with maturity self-serve,
+    account.agentPolicy allowed, all seven plans, the registration mechanism, the
+    authentication method (header-env x-api-key / PEXAFY_API_KEY), the credential rotation
+    route, the scope/role model, a three-step executable first-run flow (probe -> search ->
+    usage), economics, and an honest `gaps` array.
+  why_it_matters: >-
+    Machine-readable onboarding is rare — the whole path from "no account" to "first
+    authenticated call" is expressed as data, including the admission that there is no
+    programmatic key-issuance endpoint.
+  spec_location: /.well-known/api-onboarding
+- id: mcp-server-json
+  name: MCP server.json (schema 2025-12-11)
+  conforms: true
+  evidence: https://github.com/Pexafy/pexafy-mcp/blob/main/server.json, published to registry.modelcontextprotocol.io as com.pexafy/pexafy-mcp
+not_applicable:
+- {id: fhir, reason: not healthcare}
+- {id: fapi, reason: not financial services}
+- {id: psd2, reason: not financial services}
+- {id: scim, reason: no identity-provisioning surface}
+- {id: odata, reason: not an OData service}
+- {id: openrtb, reason: not an ad exchange}

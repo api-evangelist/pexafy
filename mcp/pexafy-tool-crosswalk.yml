@@ -1,0 +1,113 @@
+generated: '2026-08-27'
+method: derived
+source: mcp/pexafy-mcp.yml, openapi/pexafy-api-openapi.json, openapi/pexafy-api-v1-openapi.json
+note: >-
+  The MCP server is generated from the Pexafy OpenAPI spec by fastmcp, so every tool has a
+  backing REST operation and the binding is exact rather than semantic. What the crosswalk
+  actually exposes is the OPPOSITE divergence: 17 of the 20 REST operations have no tool at
+  all, because the server deliberately publishes a read-only three-tool surface.
+surfaces:
+  openapi:
+    live: openapi/pexafy-api-openapi.json
+    live_url: https://api.pexafy.com/openapi.json
+    versioned: openapi/pexafy-api-v1-openapi.json
+    versioned_url: https://raw.githubusercontent.com/Pexafy/pexafy-openapi/main/openapi/v1.json
+    gated: false
+  graphql: null
+  mcp:
+    url: https://mcp.pexafy.com/mcp
+    gated: true
+    gate: OAuth 2.1 / bearer API key — anonymous tools/list returns 401 with a WWW-Authenticate challenge
+crosswalk:
+- tool: search_photos
+  category: search
+  rest:
+  - search_photos_api_v1_search_photos_get
+  rest_versioned:
+  - searchPhotos
+  binding: rest
+  confidence: high
+  note: >-
+    Parameter names in the README table (q, color_name, color_hex, color_tolerance,
+    orientation, license_type, photographer, after_date, cursor) match the operation's
+    query parameters one-for-one. The tool inherits its real inputSchema from
+    GET /api/v1/search/photos. The operation additionally accepts `source`, `per_page` and
+    (since description 1.3.0) `score_threshold` and `sort_by`; the README table for this
+    tool lists `source` under search_photos_by_image but not here, which is a README
+    inconsistency rather than an established capability gap — treat per_page/score_threshold
+    /sort_by exposure as unconfirmed until tools/list can be read authenticated.
+- tool: search_photos_by_image
+  category: search
+  rest:
+  - search_photos_by_image_api_v1_search_photos_post
+  rest_versioned:
+  - searchPhotosByImage
+  binding: rest
+  confidence: high
+  note: >-
+    Backed by POST /api/v1/search/photos (multipart). The tool adds host-side affordances
+    the REST body does not name identically — image_url, image_file (auto-filled by hosts
+    that support uploads) and image_base64 — where the REST requestBody takes an uploaded
+    file plus the same filter fields. Exactly one of the three image inputs is required;
+    max 20 MB. NOTE the path drift: the versioned description puts this operation at
+    POST /search/photos/by-image, which does not exist on the live host.
+- tool: get_similar_photos
+  category: photos
+  rest:
+  - photo_similar_api_v1_photos__photo_id__similar_get
+  rest_versioned:
+  - getSimilarPhotos
+  binding: rest
+  confidence: high
+  note: photo_id (UUID) + cursor map directly to the path parameter and the pagination query parameter.
+mcp_only: []
+rest_only:
+- capability: photo lookup
+  operations: [get_photo_api_v1_photos__photo_id__get]
+  reason: >-
+    Search and similar results already carry the full photo object, so a by-id fetch adds
+    nothing inside a conversation.
+- capability: facets / filter vocabularies
+  operations:
+  - facet_colors_api_v1_facets_colors_get
+  - facet_sources_api_v1_facets_sources_get
+  - facet_orientations_api_v1_facets_orientations_get
+  - facet_licenses_api_v1_facets_licenses_get
+  - suggest_photographers_api_v1_facets_photographers_suggest_get
+  - get_photographer_api_v1_facets_photographers__username__get
+  reason: >-
+    Not exposed as tools. The accepted values are instead baked into the tool descriptions
+    (the README enumerates the 15 colour names, 3 orientations, 9 sources and 2 licence
+    types), so an agent cannot discover a newly indexed source — e.g. wikimedia, added in
+    description 1.3.0 — without the tool description being republished. This is the one
+    place where the read-only tool surface costs an agent real capability.
+- capability: collections (write)
+  operations:
+  - list_collections_api_v1_collections_get
+  - create_collection_api_v1_collections_post
+  - get_collection_api_v1_collections__collection_id__get
+  - delete_collection_api_v1_collections__collection_id__delete
+  - add_photo_to_collection_api_v1_collections__collection_id__photos_post
+  - remove_photo_from_collection_api_v1_collections__collection_id__photos__photo_id__delete
+  reason: >-
+    Deliberately excluded — the server declares no write scope and requests only `read`
+    in its protected-resource metadata.
+- capability: usage / quota
+  operations:
+  - get_usage_api_v1_usage_get
+  - get_daily_usage_api_v1_usage_daily_get
+  - get_monthly_usage_api_v1_usage_monthly_get
+  - get_usage_by_key_api_v1_usage_by_key_get
+  reason: >-
+    No tool. The server instead surfaces quota exhaustion conversationally ("the assistant
+    tells you in-chat instead of failing with an opaque error"), so an agent cannot pace
+    itself ahead of the limit the way the api-onboarding flow's `usage` step does over REST.
+coverage:
+  tools_named: 3
+  tools_bound: 3
+  mcp_only: 0
+  rest_ops_total: 20
+  rest_ops_with_tool: 3
+  rest_ops_without_tool: 17
+  tool_binding_rate: 1.0
+  rest_exposure_rate: 0.15

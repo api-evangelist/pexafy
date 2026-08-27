@@ -1,0 +1,42 @@
+generated: '2026-08-27'
+method: searched
+source: https://github.com/Pexafy/pexafy-python#command-line
+name: pexafy
+description: >-
+  A first-party command line client shipped inside the official Python SDK. It is not a
+  separate download — installing the `pexafy` PyPI package puts the `pexafy` console
+  script on PATH (declared as [project.scripts] pexafy = "pexafy.cli:main" in
+  pyproject.toml).
+install:
+- method: pip
+  command: pip install pexafy
+  provides: pexafy
+package: packages/pexafy-packages.yml#pexafy
+version: 0.1.1
+auth:
+  method: api-key
+  env: PEXAFY_API_KEY
+  note: The CLI shares the SDK's credential resolution — an explicit key or PEXAFY_API_KEY.
+commands:
+- command: pexafy search "<query>"
+  description: Semantic text search; prints score, photo id, dimensions, dominant colour, source and URL.
+  flags:
+  - flag: -n <count>
+    description: number of results
+  - flag: --json
+    description: emit the raw API response instead of the table
+- command: pexafy photo <id>
+  description: Fetch one photo by its UUID.
+  flags:
+  - flag: --json
+- command: pexafy similar <id>
+  description: Photos visually close to an existing photo id.
+  flags:
+  - flag: --json
+- command: pexafy usage
+  description: Read the calling key's quota consumption.
+  flags:
+  - flag: --json
+gaps:
+- No collections subcommand, though the SDK and REST API both expose collections.
+- No image-search subcommand; search-by-image is SDK/REST only.

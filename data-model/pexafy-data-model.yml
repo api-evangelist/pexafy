@@ -1,0 +1,118 @@
+generated: '2026-08-27'
+method: derived
+source: openapi/pexafy-api-openapi.json
+enriched_from: https://docs.pexafy.com/api-reference/, openapi/pexafy-api-v1-openapi.json
+note: >-
+  Derived from components.schemas $ref links and id-reference fields. The graph is small
+  and almost entirely read-only: four real entities, one of which (Collection) is the only
+  thing a caller owns or can mutate.
+entities:
+- name: Photo
+  schema: '#/components/schemas/Photo'
+  id_field: photo_id
+  id_format: UUID (UUIDv7 in observed values, e.g. 019e0eb8-b028-73cb-9296-dfa70f557bc9)
+  owner: Pexafy (catalogue-owned; not user-writable)
+  domain: catalogue
+  fields: [photo_id, image_url, urls, width, height, blur_hash, orientation, color_name, color_hex, photographer_username, photographer_full_name, photographer_url, source, license_type, source_image_url, source_description, description, alt_description, uploaded_on, relevance_score, attribution]
+  note: >-
+    The normalisation unit — every photo carries the same fields whatever library it came
+    from. relevance_score is search-context-only. blur_hash was added in description 1.2.0.
+- name: PhotoUrls
+  schema: '#/components/schemas/PhotoUrls'
+  kind: value-object
+  fields: [thumb, small, regular, large, full]
+- name: Attribution
+  schema: '#/components/schemas/Attribution'
+  kind: value-object
+  fields: [html, plain]
+  note: Ready-made credit line in two renderings; the API does the licence bookkeeping so the caller does not.
+- name: Photographer
+  schema: '#/components/schemas/Photographer'
+  id_field: username
+  id_format: string, unique per source
+  owner: Pexafy (derived from the upstream library)
+  domain: catalogue
+  fields: [username, full_name, source, url, photos_count]
+  note: >-
+    Identity is (username, source), not username alone — the same person can appear on
+    several source libraries, which is why the endpoint is
+    "Get a photographer's profiles" (plural) rather than "get a photographer".
+- name: Collection
+  schema: '#/components/schemas/Collection'
+  id_field: id
+  owner: the API key / account
+  domain: user
+  fields: [id, name, description, is_public, cover_photo_id, created_at, updated_at, photos_count]
+  note: The only writable entity in the API. Scoped to the caller; a read-scoped key gets 403 on anything under /collections.
+- name: CollectionItem
+  schema: '#/components/schemas/CollectionItem'
+  id_field: id
+  owner: the API key / account
+  domain: user
+  fields: [id, photo_id, photo_thumbnail_url, photo_source, photo_photographer, added_at]
+  note: >-
+    The join row between Collection and Photo. It denormalises a thumbnail, source and
+    photographer onto itself so listing a collection needs no second lookup.
+envelope_objects:
+- name: Meta
+  fields: [request_id, took_ms]
+- name: Pagination
+  fields: [next_cursor, per_page, has_more]
+- name: ApiError
+  fields: [code, message, request_id]
+relationships:
+- from: Photo
+  to: Photographer
+  kind: belongs_to
+  via: photographer_username
+  note: Plus photographer_full_name and photographer_url denormalised onto Photo; resolve with GET /api/v1/facets/photographers/{username}.
+- from: Photo
+  to: PhotoUrls
+  kind: has_one
+  via: urls
+- from: Photo
+  to: Attribution
+  kind: has_one
+  via: attribution
+- from: Photographer
+  to: Photo
+  kind: has_many
+  via: photographer (search filter)
+  note: 'No dedicated route; expressed as GET /api/v1/search/photos?photographer={username}'
+- from: Collection
+  to: CollectionItem
+  kind: has_many
+  via: collection_id (path parameter)
+- from: Collection
+  to: Photo
+  kind: has_one
+  via: cover_photo_id
+- from: CollectionItem
+  to: Photo
+  kind: belongs_to
+  via: photo_id
+enumerations:
+- name: source
+  values: [Unsplash, Pexels, Pixabay, StockSnap, Picjumbo, Kaboompics, Burst, Skitterphoto, NegativeSpace, wikimedia]
+  extensible: true
+  extensible_marker: x-extensible-enum (present in openapi/pexafy-api-v1-openapi.json since description 1.2.0; ABSENT from the served schema)
+  live_source_of_truth: GET /api/v1/facets/sources
+  note: >-
+    wikimedia was added in description 1.3.0 and is the enum most likely to grow again —
+    the provider's own waivers.json says "Source is the one component this will keep
+    happening to."
+- name: orientation
+  values: [landscape, portrait, square]
+  live_source_of_truth: GET /api/v1/facets/orientations
+- name: license_type
+  values: [free, cc0]
+  live_source_of_truth: GET /api/v1/facets/licenses
+- name: color_name
+  values: [red, orange, yellow, green, blue, purple, pink, brown, black, white, gray, teal, beige, gold, navy]
+  live_source_of_truth: GET /api/v1/facets/colors
+discovery_pattern:
+  note: >-
+    Every filter vocabulary has its own facets endpoint, so the accepted values are
+    readable at runtime rather than pinned to whatever the spec said at generation time.
+    This is the mitigation for the extensible-enum problem the provider writes about at
+    length — and it is exactly the surface the MCP server does NOT expose as a tool.

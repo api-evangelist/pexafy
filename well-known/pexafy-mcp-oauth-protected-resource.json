@@ -1,0 +1,1 @@
+{"resource":"https://mcp.pexafy.com/mcp","authorization_servers":["https://pexafy.com/"],"scopes_supported":["read"],"bearer_methods_supported":["header"],"resource_name":"Pexafy MCP"}

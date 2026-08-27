@@ -1,0 +1,55 @@
+generated: '2026-08-27'
+method: probed
+source: https://pexafy.com/.well-known/oauth-authorization-server
+docs: https://pexafy.com/.well-known/api-onboarding
+note: >-
+  0-working/derive-oauth-scopes.py found nothing: neither published OpenAPI declares an
+  oauth2 securityScheme, so the scope surface is invisible to a spec-only derivation. It is
+  real all the same — RFC 8414 metadata on pexafy.com advertises the authorization server,
+  RFC 9728 metadata on mcp.pexafy.com names the scope the MCP resource requires, and the
+  provider's api-onboarding descriptor documents the role model behind the two scopes.
+schemes:
+- name: PexafyOAuth
+  source: https://pexafy.com/.well-known/oauth-authorization-server
+  issuer: https://pexafy.com/
+  flows:
+  - flow: authorizationCode
+    authorizationUrl: https://pexafy.com/oauth/authorize/
+    tokenUrl: https://pexafy.com/oauth/token/
+    code_challenge_methods: [S256]
+  dynamic_client_registration: https://pexafy.com/oauth/register
+  token_endpoint_auth_methods: [none, client_secret_post]
+  grant_types: [authorization_code, refresh_token]
+scopes:
+- scope: read
+  description: >-
+    Search, photo lookups and facets. The api-onboarding descriptor states dashboard keys
+    carry read and write; read covers everything that does not mutate a collection.
+  flows: [authorizationCode]
+  sources:
+  - https://pexafy.com/.well-known/oauth-authorization-server
+  - https://pexafy.com/.well-known/api-onboarding
+- scope: write
+  description: >-
+    The caller's own collections — create, delete, add and remove photos. The versioned
+    OpenAPI description says a read-scoped key gets a 403 on anything under /collections.
+  flows: [authorizationCode]
+  sources:
+  - https://pexafy.com/.well-known/oauth-authorization-server
+  - openapi/pexafy-api-v1-openapi.json
+resources:
+- resource: https://mcp.pexafy.com/mcp
+  authorization_servers: [https://pexafy.com/]
+  scopes_supported: [read]
+  bearer_methods_supported: [header]
+  resource_name: Pexafy MCP
+  source: https://mcp.pexafy.com/.well-known/oauth-protected-resource
+  note: The MCP server requests read only — its three tools are all read-only, so it never asks for write.
+internal_roles_not_granted:
+  note: >-
+    Verbatim from the api-onboarding descriptor: "Admin and crawler roles are internal and
+    are never granted to user keys."
+  roles: [admin, crawler]
+gaps:
+- Neither OpenAPI document declares the oauth2 scheme or attaches scopes to operations, so scope requirements cannot be read per-operation from the contract.
+- There is no human-readable scopes/permissions reference page in the docs; the scope model is only discoverable from the two well-known documents.

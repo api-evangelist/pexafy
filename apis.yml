@@ -1,56 +1,136 @@
 name: Pexafy
-description: >-
-  Semantic (meaning-based) search engine over free-license stock photography. A single request queries 9 free
-  stock-photo libraries (Unsplash, Pexels, Pixabay, StockSnap, Picjumbo, Kaboompics, Burst, Skitterphoto, NegativeSpace;
-  9M+ images) and normalizes results into one JSON schema. Supports natural-language queries in 23 languages,
-  image-to-image search, and filtering by color, orientation, license, source, photographer, and date.
-url: https://raw.githubusercontent.com/api-evangelist/pexafy/refs/heads/main/apis.yml
+description: Pexafy is a semantic (meaning-based) search engine over free-licence stock photography. One request queries nine
+  free stock-photo libraries — Unsplash, Pexels, Pixabay, StockSnap, Picjumbo, Kaboompics, Burst, Skitterphoto and NegativeSpace,
+  plus Wikimedia Commons since description 1.3.0 — and returns every photo in one normalised JSON schema with dimensions,
+  dominant colour, orientation, photographer, licence and a ready-made attribution string. Queries are written as full sentences
+  in any of 100+ languages and ranked by meaning rather than keyword overlap; an image can be posted instead of text to find
+  visually similar photos, and results can be filtered by colour, orientation, licence, source, photographer or date. The
+  API is self-serve — a key is issued immediately from the dashboard with no application review and no mandatory download-tracking
+  callback — and the same catalogue is exposed to LLM clients through a hosted, OAuth-protected MCP server at mcp.pexafy.com.
+image: https://pexafy.com/static/img/favicon.png
+url: https://pexafy.com/.well-known/apis.json
 created: '2026-08-27'
 modified: '2026-08-27'
 specificationVersion: '0.21'
 tags:
+- images
+- photos
+- stock photos
+- image search
+- semantic search
+- computer vision
+- embeddings
+- mcp
+- agent-native
+- content licensing
+apis:
+- name: Pexafy API
+  description: REST API for semantic stock-photo search across nine free-licence libraries. Twenty operations over five resources
+    — search (text and image-to-image), photos (lookup and similar), facets (the live filter vocabularies), collections (the
+    only writable surface) and usage (quota counters). Cursor pagination, a single success/error envelope, x-api-key or bearer
+    authentication, and X-RateLimit-* headers on every response.
+  image: https://pexafy.com/static/img/favicon.png
+  humanURL: https://docs.pexafy.com
+  baseURL: https://api.pexafy.com
+  tags:
   - images
   - photos
-  - stock photos
   - image search
   - semantic search
-  - computer vision
-  - embeddings
-  - MCP
-  - agent-native
-apis:
-  - name: Pexafy API
-    description: >-
-      REST API for semantic stock-photo search across 9 free libraries, with text and image-to-image search, facets,
-      collections, and usage endpoints. Auth via x-api-key header.
-    humanURL: https://docs.pexafy.com
-    baseURL: https://api.pexafy.com
-    tags:
-      - images
-      - photos
-      - stock photos
-      - image search
-      - semantic search
-      - computer vision
-      - embeddings
-      - MCP
-      - agent-native
-    properties:
-      - type: OpenAPI
-        url: https://api.pexafy.com/openapi.json
-      - type: Documentation
-        url: https://docs.pexafy.com
-      - type: LLMsTxt
-        url: https://pexafy.com/llms.txt
-      - type: LLMsTxt
-        url: https://docs.pexafy.com/llms.txt
-      - type: MCPServer
-        url: https://mcp.pexafy.com/mcp
+  - stock photos
+  properties:
+  - type: Documentation
+    url: https://docs.pexafy.com
+  - type: APIReference
+    url: https://docs.pexafy.com/api-reference
+  - type: GettingStarted
+    url: https://docs.pexafy.com/quickstart
+  - type: OpenAPI
+    url: https://api.pexafy.com/openapi.json
+  - type: OpenAPI
+    url: openapi/pexafy-api-openapi.json
+  - type: SignUp
+    url: https://pexafy.com/signup/
+  - type: Pricing
+    url: https://pexafy.com/pricing/
+  - type: TermsOfService
+    url: https://pexafy.com/legal/terms/
+  - type: PrivacyPolicy
+    url: https://pexafy.com/legal/privacy/
+  - type: StatusPage
+    url: https://status.pexafy.com
+  - type: LLMSTxt
+    url: https://pexafy.com/llms.txt
+  - type: MCPServer
+    url: https://mcp.pexafy.com/mcp
+  - type: APIOnboarding
+    url: https://pexafy.com/.well-known/api-onboarding
+  - type: ToolCrosswalk
+    url: mcp/pexafy-tool-crosswalk.yml
 maintainers:
-  - FN: Pexafy
-    url: https://pexafy.com
-generated:
-  by: apis.io/add
-  model: claude-opus-4-8
-  confidence: 98
-  at: '2026-08-27T15:59:46.281Z'
+- FN: Pexafy
+  email: support@pexafy.com
+  url: https://pexafy.com
+  GitHub: https://github.com/Pexafy
+  LinkedIn: https://www.linkedin.com/company/pexafy
+aid: pexafy
+common:
+- type: DeveloperPortal
+  url: https://docs.pexafy.com
+- type: Support
+  url: https://pexafy.com/contact/
+- type: HelpCenter
+  url: https://pexafy.com/faq/
+- type: Blog
+  url: https://pexafy.com/blog/
+- type: GitHubOrganization
+  url: https://github.com/Pexafy
+- type: Login
+  url: https://pexafy.com/auth/login/
+- type: AgenticAccess
+  url: agentic-access/pexafy-agentic-access.yml
+- type: DomainSecurity
+  url: security/pexafy-domain-security.yml
+- type: Authentication
+  url: authentication/pexafy-authentication.yml
+- type: OAuthScopes
+  url: scopes/pexafy-scopes.yml
+- type: WellKnown
+  url: well-known/pexafy-well-known.yml
+- type: LLMsTxt
+  url: llms/pexafy-llms.txt
+- type: MCPServer
+  url: mcp/pexafy-mcp.yml
+- type: Packages
+  url: packages/pexafy-packages.yml
+- type: SDKs
+  url: packages/pexafy-packages.yml
+- type: CLI
+  url: cli/pexafy-cli.yml
+- type: Conventions
+  url: conventions/pexafy-conventions.yml
+- type: ErrorCatalog
+  url: errors/pexafy-problem-types.yml
+- type: Lifecycle
+  url: lifecycle/pexafy-lifecycle.yml
+- type: Deprecation
+  url: https://github.com/Pexafy/pexafy-openapi
+- type: ChangeLog
+  url: changelog/pexafy-changelog.yml
+- type: Conformance
+  url: conformance/pexafy-conformance.yml
+- type: DataModel
+  url: data-model/pexafy-data-model.yml
+- type: Overlay
+  url: overlays/pexafy-api-overlay.yaml
+- type: RateLimits
+  url: rate-limits/pexafy-rate-limits.yml
+- type: Plans
+  url: plans/pexafy-plans-pricing.yml
+- type: AgentSkill
+  url: skills/_index.yml
+x-enrichment:
+  date: '2026-08-27'
+  status: enriched
+  artifacts_added: 33
+  pass: local-v1

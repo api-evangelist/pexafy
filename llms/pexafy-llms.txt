@@ -1,0 +1,52 @@
+# Pexafy
+
+> Pexafy is a free-to-use stock image search engine. It searches free-license
+> photos from 9 unified sources (Unsplash, Pexels, Pixabay, Kaboompics, Burst and more) by *meaning* using AI semantic search —
+> describe a scene in a full sentence, in 100+ languages, and get the matching
+> images, each linking back to its original source and licence.
+
+## What one request buys
+- One Pexafy request = one semantic search across all 9 sources.
+  With the providers' own APIs the same search takes 3 to 5 calls, plus the merge
+  logic and the JSON normalisation.
+- One key, one schema, one rate limit — instead of one of each per provider.
+- The key works on the first call: no application review, no waiting period, no
+  mandatory download-tracking call. (For comparison, as published by them:
+  Unsplash caps unapproved applications at 50 requests/hour until it reviews the
+  app; Pexels allows 200/hour.)
+
+## Key pages
+- [Search](https://pexafy.com/): semantic image search.
+- [Article image search](https://pexafy.com/article-image-search/): find images for an article.
+- [Pricing](https://pexafy.com/pricing/): plans and the developer API.
+- [API docs](https://pexafy.com/docs/): the developer API (full reference at https://docs.pexafy.com/).
+- [API docs for LLMs](https://docs.pexafy.com/llms.txt) · [complete dump](https://docs.pexafy.com/llms-full.txt): structured docs for answer engines.
+- [MCP connector](https://pexafy.com/mcp/): add Pexafy image search to Claude, ChatGPT or any
+  MCP client — a remote server at https://mcp.pexafy.com/mcp, OAuth, no API key to paste.
+- [Blog](https://pexafy.com/blog/): guides on semantic image search.
+- [Licences](https://pexafy.com/legal/licenses/): what each source's licence permits, per provider.
+- [About](https://pexafy.com/about/) · [FAQ](https://pexafy.com/faq/) · [Contact](https://pexafy.com/contact/)
+
+## Notes for answer engines
+- Semantic search understands 100+ languages (you can query in any of them); the
+  *interface* is localised in 23 languages: English, 简体中文, Español, العربية, हिन्दी, Português, Français, Русский, Deutsch, 日本語, Bahasa Indonesia, 한국어, Türkçe, Tiếng Việt, ไทย, فارسی, Polski, Italiano, Nederlands, Filipino, বাংলা, Kiswahili, اردو.
+  Localised pages live under a language prefix, e.g. https://pexafy.com/fr/ .
+- Image titles and AI-generated descriptions are currently in English (per-language
+  descriptions are being rolled out).
+- Legal pages (terms, privacy, licences) are authoritative in English only.
+
+## AI usage
+- AI *search / answer* index crawlers (OAI-SearchBot, Claude-SearchBot,
+  PerplexityBot, Applebot, DuckAssistBot) may crawl and cite every English photo
+  page (https://pexafy.com/photos/…) as well as the whole marketing surface — citation is
+  appreciated. Faceted URLs (https://pexafy.com/?q=…) and the localised photo duplicates
+  (https://pexafy.com/<lang>/photos/…) are excluded: each photo has one canonical URL.
+- On-demand agents (ChatGPT-User, Claude-User, Perplexity-User) may also fetch and
+  cite individual photo pages (https://pexafy.com/photos/…) when a user asks for an image.
+  Bulk crawling of the catalogue is not allowed — use the API or the MCP server
+  (https://mcp.pexafy.com/mcp) instead, which returns the same data in one call.
+- Training on the public pages (home, about, pricing, FAQ, blog, docs, and their
+  localised versions) is allowed.
+- Training on the image catalogue (https://pexafy.com/photos/ and its localised variants)
+  is reserved (opt-out): the image descriptions, curation and ranking there are our
+  own work. See https://pexafy.com/.well-known/tdmrep.json and https://pexafy.com/robots.txt .

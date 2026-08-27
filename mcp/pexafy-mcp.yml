@@ -1,0 +1,108 @@
+generated: '2026-08-27'
+method: searched
+status: published
+source: https://pexafy.com/mcp/
+additional_sources:
+- https://docs.pexafy.com/mcp
+- https://github.com/Pexafy/pexafy-mcp
+- https://registry.modelcontextprotocol.io/v0/servers?search=pexafy
+- https://mcp.pexafy.com/.well-known/oauth-protected-resource
+deployment:
+  mode: both
+  endpoint: https://mcp.pexafy.com/mcp
+  install: "git clone https://github.com/Pexafy/pexafy-mcp.git && cd pexafy-mcp && ./run.sh setup && ./run.sh dev"
+  package: https://github.com/Pexafy/pexafy-mcp
+  auth: oauth
+  verified: probed
+  note: >-
+    `mode: both` because the provider ships a hosted remote endpoint AND a self-hostable
+    server, but they are not equal offerings. The remote endpoint is the intended path and
+    the only one an agent can reach unaided; the self-host path is documented as optional
+    ("You don't need to"), needs Python 3.12+ and a Pexafy API key, and is NOT on a package
+    registry — pypi.org/pypi/pexafy-mcp/json returns 404 and npm has no such package, so
+    there is no `npx`/`pip install` one-liner. Install is from git source or the repo's
+    Dockerfile. The console script `pexafy-mcp` defaults to stdio;
+    PEXAFY_MCP_TRANSPORT=http switches it to Streamable HTTP.
+server:
+  name: com.pexafy/pexafy-mcp
+  title: Pexafy
+  transport: streamable-http
+  url: https://mcp.pexafy.com/mcp
+  version: 0.4.11
+  liveness: https://mcp.pexafy.com/health
+  implementation: >-
+    Python, built on fastmcp>=3.4, which generates the MCP server from the Pexafy OpenAPI
+    spec — the tool surface is a projection of the REST contract, not a hand-written one.
+authentication:
+  primary: oauth
+  oauth:
+    resource: https://mcp.pexafy.com/mcp
+    authorization_servers: [https://pexafy.com/]
+    scopes_supported: [read]
+    bearer_methods_supported: [header]
+    resource_metadata: https://mcp.pexafy.com/.well-known/oauth-protected-resource
+    dynamic_client_registration: true
+    pkce: S256
+  fallback:
+    method: api-key
+    header: "Authorization: Bearer pexafy_api_..."
+    alternative_header: x-api-key
+    note: For MCP clients that do not implement OAuth.
+listings:
+- registry: Model Context Protocol registry
+  id: com.pexafy/pexafy-mcp
+  url: https://registry.modelcontextprotocol.io
+  status: active
+  first_published: '2026-08-17'
+  note: >-
+    The registry's latest published entry lags the repo (registry versions run to 0.3.0;
+    the repo and server.json are at 0.4.11 as of 2026-08-27).
+- registry: Smithery
+  url: https://smithery.ai/servers/pexafy/pexafy-mcp
+  status: 200
+tools_probe:
+  method: POST https://mcp.pexafy.com/mcp {"jsonrpc":"2.0","id":1,"method":"tools/list"}
+  http_status: 401
+  challenge: 'WWW-Authenticate: Bearer resource_metadata="https://mcp.pexafy.com/.well-known/oauth-protected-resource/mcp"'
+  body: >-
+    {"error": "unauthorized", "error_description": "This MCP server needs to know who you
+    are. ..."}
+  conclusion: >-
+    The live tool schemas are auth-gated. The tools below are transcribed from the
+    provider's own README parameter tables (github.com/Pexafy/pexafy-mcp) and the docs, NOT
+    from a tools/list response — names and parameters are the provider's, but the exact
+    JSON Schema types/required-arrays need authenticated introspection to confirm.
+tools:
+- name: search_photos
+  description: Semantic text search. Describe the scene in a full sentence; sentences beat keywords.
+  read_only: true
+  parameters: [q, color_name, color_hex, color_tolerance, orientation, license_type, photographer, after_date, cursor]
+  source_operation: openapi/pexafy-api-openapi.json#search_photos_api_v1_search_photos_get
+- name: search_photos_by_image
+  description: Visual search from a reference image, optionally combined with text ("like this, but at night").
+  read_only: true
+  parameters: [image_url, image_file, image_base64, q, text_alpha, orientation, source, color_name, license_type, photographer, after_date, cursor]
+  source_operation: openapi/pexafy-api-openapi.json#search_photos_by_image_api_v1_search_photos_post
+- name: get_similar_photos
+  description: More photos like an existing one, by photo id.
+  read_only: true
+  parameters: [photo_id, cursor]
+  source_operation: openapi/pexafy-api-openapi.json#photo_similar_api_v1_photos__photo_id__similar_get
+tool_count: 3
+write_surface: none
+write_surface_note: >-
+  The README states it plainly: "Three read-only tools. No write scope, no account
+  mutation." The REST API's collection writes are deliberately not exposed as tools, and
+  the protected-resource metadata asks for the read scope only.
+client_setup:
+- client: Claude web / desktop
+  method: Settings -> Connectors -> Add custom connector -> https://mcp.pexafy.com/mcp (OAuth sign-in)
+- client: Claude Code
+  method: claude mcp add --transport http pexafy https://mcp.pexafy.com/mcp
+- client: any MCP client
+  method: streamable-http transport pointed at https://mcp.pexafy.com/mcp
+rendering:
+  note: >-
+    Results are returned as a numbered thumbnail grid rendered inline in the conversation,
+    and in MCP Apps-capable clients a thumbnail opens a detail panel from data already in
+    the tool result — no second call.

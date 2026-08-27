@@ -1,0 +1,97 @@
+overlay: 1.0.0
+info:
+  title: API Evangelist enhancements for the Pexafy API
+  version: 1.0.0
+extends: openapi/pexafy-api-openapi.json
+x-provenance:
+  generated: '2026-08-27'
+  method: generated
+  source: >-
+    API Evangelist enrichment pass 2026-08-27. Captures findings measured against the
+    SERVED schema (https://api.pexafy.com/openapi.json) that are documented by the provider
+    elsewhere but absent from the document itself. The original is never mutated.
+actions:
+- target: $.info
+  update:
+    x-apievangelist-enriched: '2026-08-27'
+    x-apievangelist-notes: >-
+      Pexafy publishes TWO first-party OpenAPI documents. This one is the served,
+      FastAPI-auto-generated schema; a richer hand-maintained description (clean
+      operationIds, 80 examples, x-extensible-enum, full 4xx/5xx coverage) is versioned at
+      github.com/Pexafy/pexafy-openapi and is currently at 1.3.0. The two disagree on the
+      image-search path and on the set of usage endpoints.
+    x-apievangelist-alternate-description: https://raw.githubusercontent.com/Pexafy/pexafy-openapi/main/openapi/v1.json
+- target: $
+  update:
+    x-apievangelist-security-note: >-
+      All 20 operations declare `security: [{ApiKeyAuth: []}]` per-operation, but the
+      document has no root-level `security` and no 401 response on any operation — so a
+      generated client knows a credential is required and still has no error shape for the
+      case where it is missing. An unauthenticated call returns 401 with error.code
+      UNAUTHORIZED. Confirmed live on 2026-08-27.
+    x-apievangelist-rate-limit-headers:
+      limit: x-ratelimit-limit
+      remaining: x-ratelimit-remaining
+      reset: x-ratelimit-reset
+      status_on_exhaustion: 429
+      error_code: RATE_LIMITED
+      note: Observed on live responses; not declared in this document.
+    x-apievangelist-request-id-header: x-request-id
+    x-apievangelist-undocumented-operations:
+    - path: /health
+      method: get
+      note: Public unauthenticated liveness check, used as the pre-flight step in the provider's own api-onboarding descriptor. Returns 200 with the standard envelope. Not present in paths[].
+- target: $.paths['/api/v1/search/photos'].get
+  update:
+    x-apievangelist-pagination:
+      style: cursor
+      request: [per_page, cursor]
+      response: [pagination.per_page, pagination.has_more, pagination.next_cursor]
+      cursor_ttl: ~5 minutes
+    x-apievangelist-undocumented-responses: [400, 401, 403, 422, 429, 500]
+- target: $.paths['/api/v1/search/photos'].post
+  update:
+    x-apievangelist-pagination:
+      style: cursor
+      note: The cursor remembers the uploaded image; subsequent pages send cursor only, with no re-upload.
+    x-apievangelist-undocumented-responses: [400, 401, 403, 422, 429, 500]
+- target: $.paths['/api/v1/photos/{photo_id}/similar'].get
+  update:
+    x-apievangelist-pagination:
+      style: cursor
+      note: On some plans the similar set is capped to one page, so has_more can be false from the start.
+    x-apievangelist-undocumented-responses: [401, 404, 422, 429]
+- target: $.paths['/api/v1/collections'].post
+  update:
+    x-apievangelist-reversibility:
+      reversal_operation: delete_collection_api_v1_collections__collection_id__delete
+      window: null
+      grade: documented
+    x-apievangelist-idempotency: none — a retry creates a second identically-named collection
+- target: $.paths['/api/v1/collections/{collection_id}'].delete
+  update:
+    x-apievangelist-reversibility:
+      reversal_operation: null
+      window: null
+      grade: irreversible
+      note: No restore/undelete operation exists. Read the collection's photos first; that id list is the only recovery path.
+- target: $.paths['/api/v1/collections/{collection_id}/photos'].post
+  update:
+    x-apievangelist-reversibility:
+      reversal_operation: remove_photo_from_collection_api_v1_collections__collection_id__photos__photo_id__delete
+      window: null
+      grade: documented
+- target: $.components.schemas.Photo.properties.source
+  update:
+    x-apievangelist-note: >-
+      Extensible enum. The versioned description carries x-extensible-enum here so a code
+      generator can emit an open type; this served schema does not, so generated closed
+      types will break the next time a library is indexed (wikimedia, description 1.3.0,
+      was the last one). Read GET /api/v1/facets/sources at runtime instead.
+- target: $.components.schemas.ApiError
+  update:
+    x-apievangelist-error-catalog: errors/pexafy-problem-types.yml
+    x-apievangelist-note: >-
+      16 stable error codes are published at https://docs.pexafy.com/errors and none of them
+      appear in this document. error.code is the field to branch on; error.message is
+      explicitly documented as subject to change.

@@ -1,0 +1,74 @@
+generated: '2026-08-27'
+method: searched
+source: https://docs.pexafy.com/errors
+derived_from:
+- openapi/pexafy-api-openapi.json
+- openapi/pexafy-api-v1-openapi.json
+format: custom-envelope
+format_note: >-
+  NOT RFC 9457. Pexafy does not use application/problem+json. Errors ride the same
+  application/json envelope as successes — success:false, data:null, meta{request_id,
+  took_ms} and a populated error{code, message, request_id} object. The docs are explicit
+  that error.code is the stable machine-readable field and error.message is human-readable
+  and may change.
+envelope:
+  content_type: application/json
+  fields:
+    success: false
+    data: null
+    meta.request_id: UUID, echoed in the x-request-id response header
+    meta.took_ms: float
+    error.code: stable machine-readable enum
+    error.message: human-readable, subject to change
+    error.request_id: same UUID as meta.request_id
+    error.fields: "array present only on VALIDATION_ERROR — one entry per invalid parameter with field, message, type"
+  schema: openapi/pexafy-api-openapi.json#/components/schemas/ApiError
+status_codes:
+- {status: 200, meaning: Success.}
+- {status: 201, meaning: Created.}
+- {status: 400, meaning: Bad request — a parameter is missing or invalid.}
+- {status: 401, meaning: Authentication failed — missing or invalid x-api-key.}
+- {status: 403, meaning: Forbidden — your plan or account is not allowed to perform this action.}
+- {status: 404, meaning: The resource (photo, collection, photographer) or route does not exist.}
+- {status: 409, meaning: Conflict — the action clashes with the current state.}
+- {status: 422, meaning: Validation error — a parameter failed validation.}
+- {status: 429, meaning: Too many requests — rate limit hit. Slow down and retry.}
+- {status: 500, meaning: Internal error.}
+- {status: 504, meaning: The search backend timed out — retry shortly.}
+problems:
+- {code: MISSING_PARAMS, status: 400, title: A search was sent with no query and no filter.}
+- {code: INVALID_PARAMS, status: 400, title: "Conflicting parameters (e.g. color_name and color_hex together)."}
+- {code: INVALID_ID, status: 400, title: photo_id is not a valid UUID.}
+- {code: VALIDATION_ERROR, status: 422, title: "A parameter failed validation (out of range, wrong type, required).", remediation: Read error.fields for the offending parameters.}
+- {code: MISSING_IMAGE, status: 422, title: Image search was called without an image file.}
+- {code: INVALID_IMAGE, status: 422, title: "The uploaded file is not a supported image (JPEG, PNG, WebP, AVIF) or is too large."}
+- {code: UNAUTHORIZED, status: 401, title: The x-api-key header is missing or invalid.}
+- {code: FORBIDDEN, status: 403, title: Your account/plan cannot perform this action.}
+- {code: PLAN_RESTRICTION, status: 403, title: The requested field or feature is not in your plan.}
+- {code: COLLECTIONS_LIMIT_REACHED, status: 403, title: You reached the maximum number of collections for your plan.}
+- {code: PHOTO_NOT_FOUND, status: 404, title: No photo matches the given photo_id.}
+- {code: NOT_FOUND, status: 404, title: The collection, photographer or route does not exist.}
+- {code: PHOTO_ALREADY_IN_COLLECTION, status: 409, title: The photo is already in that collection.}
+- {code: RATE_LIMITED, status: 429, title: You exceeded the request rate limit., remediation: Back off and retry; see rate-limits/pexafy-rate-limits.yml.}
+- {code: SEARCH_TIMEOUT, status: 504, title: The search backend did not respond in time — retry.}
+- {code: INTERNAL_ERROR, status: 500, title: Unexpected server error — retry, then contact support with the request_id.}
+observed:
+- request: GET https://api.pexafy.com/api/v1/search/photos?q=test (no credential)
+  status: 401
+  body: '{"success":false,"data":null,"meta":{"request_id":"...","took_ms":0},"error":{"code":"UNAUTHORIZED","message":"Authentication required (Bearer token or X-Api-Key). Get a free API key at https://pexafy.com/dashboard/api-keys/create/.","request_id":"..."}}'
+  note: Confirms the envelope and the UNAUTHORIZED code exactly as documented. Edge marker x-pexafy-edge:api-no-key was also returned.
+contract_coverage_gap:
+  live_spec:
+    file: openapi/pexafy-api-openapi.json
+    documented_error_responses: [422]
+    note: >-
+      The live FastAPI-generated schema documents only 200/201 and 422 on every operation.
+      None of the 16 error codes above, and none of 400/401/403/404/409/429/500/504, appear
+      in the served contract — a generated client sees no error shape at all.
+  versioned_spec:
+    file: openapi/pexafy-api-v1-openapi.json
+    documented_error_responses: [400, 401, 403, 404, 422, 429, 500]
+    note: >-
+      The hand-maintained description in the pexafy-openapi repo DOES carry the error
+      responses (plus 80 examples and x-extensible-enum). It is the better contract; it is
+      just not the one served at api.pexafy.com/openapi.json.

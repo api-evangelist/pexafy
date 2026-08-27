@@ -1,0 +1,71 @@
+generated: '2026-08-27'
+method: searched
+source: >-
+  registry.npmjs.org, pypi.org/pypi/<pkg>/json, api.github.com/users/Pexafy/repos, and the
+  provider's own repo READMEs / pyproject.toml
+note: >-
+  Pexafy publishes one client library and it is Python only. npm, RubyGems, crates.io,
+  Packagist, NuGet, Maven Central and pkg.go.dev carry nothing under "pexafy" — the JS/TS,
+  Go and Ruby surfaces do not exist, so an integrator on those stacks calls the REST API
+  directly. Three first-party repos exist in the GitHub org; only one of them ships to a
+  package registry.
+packages:
+- language: python
+  registry: pypi
+  name: pexafy
+  url: https://pypi.org/project/pexafy/
+  install: pip install pexafy
+  official: true
+  version: 0.1.1
+  published: '2026-08-20'
+  source_code: https://github.com/Pexafy/pexafy-python
+  license: MIT
+  note: >-
+    Sync + async clients, cursor paging via iter_search, typed exceptions, retries with
+    Retry-After honoured, and a `pexafy` console script (see cli/pexafy-cli.yml). Registry
+    metadata read from pypi.org/pypi/pexafy/json on 2026-08-27; the release is 7 days old
+    against a live API whose description is at 1.3.0, so the SDK is current.
+- language: python
+  registry: pypi
+  name: pexafy-openapi
+  url: https://github.com/Pexafy/pexafy-openapi
+  install: pip install pexafy-openapi
+  official: true
+  version: null
+  published: null
+  source_code: https://github.com/Pexafy/pexafy-openapi
+  license: see repo LICENSE
+  note: >-
+    CHECKED, NOTHING TO RECORD. The repo README instructs `pip install pexafy-openapi`,
+    but https://pypi.org/pypi/pexafy-openapi/json returns 404 — the distribution is not on
+    PyPI, so the documented install command fails and the only working install is
+    `pip install git+https://github.com/Pexafy/pexafy-openapi` (also given in the README).
+    This is the versioned OpenAPI description plus a request/response-variance differ, not
+    an API client. Repo last pushed 2026-08-25.
+- language: python
+  registry: github
+  name: pexafy-mcp
+  url: https://github.com/Pexafy/pexafy-mcp
+  install: git clone https://github.com/Pexafy/pexafy-mcp.git && ./run.sh setup
+  official: true
+  version: 0.4.11
+  published: null
+  source_code: https://github.com/Pexafy/pexafy-mcp
+  license: MIT
+  note: >-
+    NOT ON A PACKAGE REGISTRY — pypi.org/pypi/pexafy-mcp/json is 404 and npm has no
+    pexafy-mcp. Distributed as source plus a Dockerfile/docker-compose example. Version
+    0.4.11 read from pyproject.toml and server.json on the default branch (2026-08-27);
+    the MCP registry's own latest published entry for com.pexafy/pexafy-mcp is behind the
+    repo, so there is no dated registry release to cite — hence published: null. Self-hosting
+    is optional; the hosted remote server is the intended path (see mcp/pexafy-mcp.yml).
+registries_checked:
+- registry: npm
+  queries: [pexafy, "@pexafy/sdk", pexafy-mcp]
+  result: 404 on all
+- registry: pypi
+  queries: [pexafy, pexafy-client, pexafy-python, pexafy-mcp, pexafy-openapi, pexafy-mcp-server]
+  result: only "pexafy" resolves (200); the rest 404
+- registry: github
+  queries: [github.com/Pexafy]
+  result: 3 public repos — pexafy-mcp, pexafy-openapi, pexafy-python

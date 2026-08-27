@@ -1,0 +1,55 @@
+generated: '2026-08-27'
+method: searched
+source: https://raw.githubusercontent.com/Pexafy/pexafy-openapi/main/CHANGELOG.md
+additional_sources:
+- https://raw.githubusercontent.com/Pexafy/pexafy-python/main/CHANGELOG.md
+note: >-
+  There is no changelog page on the documentation host — https://docs.pexafy.com/changelog
+  returns 404 and neither llms.txt links one. The change record lives in the GitHub repos
+  instead, one per artefact, and the API-description changelog is the substantive one. It
+  is undated: entries carry version numbers but no release dates, so the ordering is
+  known and the timing is not.
+scheme: semver
+current_version: 1.3.0
+subject: the OpenAPI description of the Pexafy API (not the URI version, which is pinned at v1)
+dated: false
+entries:
+- version: 1.3.0
+  date: null
+  breaking:
+  - 'Source enum gained "wikimedia" (Wikimedia Commons indexed) — breaking for consumers whose generated client type for `source` is a closed set. Announced in the 1.2.0 notes and recorded in waivers.json rather than hidden.'
+  additions:
+  - score_threshold on both search endpoints, so a caller can decide a semantic search returned nothing useful ("search always returns something; there is no natural zero-result case to detect").
+  notable:
+  - per_page now defaults to 20 rather than 24 — no wire-contract change, but every caller who never set it gets a different page size.
+- version: 1.2.0
+  date: null
+  breaking: []
+  additions:
+  - /facets/licenses, so licence families are readable rather than guessable.
+  - sort_by on the search endpoints.
+  - blur_hash on Photo.
+  - 'x-extensible-enum on every extensible enum, which is what lets a generator emit an open type. The changelog says plainly it "should have been there from the start; adding it later does not help anybody who already generated a client."'
+- version: 1.1.0
+  date: null
+  breaking: []
+  additions:
+  - First published description.
+sdk_entries:
+- package: pexafy (PyPI)
+  version: 0.1.1
+  date: '2026-08-20'
+  breaking: []
+  fixes:
+  - 'Multi-valued filters never worked against the live API: orientation, source and license_type were sent comma-separated, which the server reads as one value — source and license_type matched nothing and returned an empty page, while an unrecognised orientation was silently dropped and the caller got an unfiltered page with no indication.'
+  - color_name now refuses several values instead of joining them (the API filters on the last one it receives).
+- package: pexafy (PyPI)
+  version: 0.1.0
+  date: null
+  additions:
+  - Sync + async clients; text, image and similar search; facets, collections, usage.
+  - Cursor paging via iter_search; typed exceptions; retries on timeouts and 5xx with Retry-After honoured; a `pexafy` CLI.
+gaps:
+- No changelog on docs.pexafy.com (404), so a reader who never leaves the documentation host cannot find any change record.
+- No dates on the API-description changelog entries.
+- No RSS/Atom feed or dated release notes page for the API itself.

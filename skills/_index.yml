@@ -1,0 +1,24 @@
+generated: '2026-08-27'
+method: generated
+source: openapi/pexafy-api-openapi.json, conventions/pexafy-conventions.yml, errors/pexafy-problem-types.yml, rate-limits/pexafy-rate-limits.yml
+note: >-
+  No provider-published Agent Skills or AGENTS.md were found in the Pexafy GitHub org or on
+  either docs host. These four are generated from the served OpenAPI; every operationId
+  quoted was grepped out of openapi/pexafy-api-openapi.json.
+skills:
+- file: pexafy-find-a-usable-photo.md
+  name: Find a usable photo with Pexafy
+  api: openapi/pexafy-api-openapi.json
+  operations: [search_photos_api_v1_search_photos_get, facet_sources_api_v1_facets_sources_get, facet_colors_api_v1_facets_colors_get, get_photo_api_v1_photos__photo_id__get]
+- file: pexafy-visual-search-and-refine.md
+  name: Search Pexafy by image and refine
+  api: openapi/pexafy-api-openapi.json
+  operations: [search_photos_by_image_api_v1_search_photos_post, photo_similar_api_v1_photos__photo_id__similar_get, get_photo_api_v1_photos__photo_id__get]
+- file: pexafy-curate-a-collection.md
+  name: Curate a Pexafy collection
+  api: openapi/pexafy-api-openapi.json
+  operations: [list_collections_api_v1_collections_get, create_collection_api_v1_collections_post, get_collection_api_v1_collections__collection_id__get, add_photo_to_collection_api_v1_collections__collection_id__photos_post, remove_photo_from_collection_api_v1_collections__collection_id__photos__photo_id__delete, delete_collection_api_v1_collections__collection_id__delete]
+- file: pexafy-pace-against-quota.md
+  name: Pace a Pexafy integration against its quota
+  api: openapi/pexafy-api-openapi.json
+  operations: [get_usage_api_v1_usage_get, get_daily_usage_api_v1_usage_daily_get, get_monthly_usage_api_v1_usage_monthly_get, get_usage_by_key_api_v1_usage_by_key_get]

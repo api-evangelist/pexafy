@@ -1,0 +1,111 @@
+generated: '2026-08-27'
+method: probed
+source: https://pexafy.com/pricing/
+probe: >-
+  Response headers observed live on GET https://api.pexafy.com/health and on an
+  unauthenticated GET https://api.pexafy.com/api/v1/search/photos, 2026-08-27.
+limit_count: 7
+headers:
+  returned:
+  - name: x-ratelimit-limit
+    description: Requests allowed in the current window.
+    observed_values: [100, 60]
+  - name: x-ratelimit-remaining
+    description: Requests left in the current window.
+    observed_values: [98, 59]
+  - name: x-ratelimit-reset
+    description: Unix epoch seconds at which the window resets.
+    observed_values: [1787852771]
+  - name: x-request-id
+    description: Correlation id, mirrored into meta.request_id in the body.
+  retry_after: false
+  retry_after_note: >-
+    No Retry-After header was observed on the probes (neither returned a 429). The official
+    Python SDK's changelog says "Retry-After honoured", so the server is expected to send it
+    on an actual 429 — unconfirmed from an anonymous probe.
+  standard: >-
+    Lowercase X-RateLimit-* (the de-facto convention), NOT the IETF draft RateLimit-* /
+    RateLimit-Policy form.
+  status_on_exhaustion: 429
+  error_code_on_exhaustion: RATE_LIMITED
+  documented_in_openapi: >-
+    The versioned description (openapi/pexafy-api-v1-openapi.json) documents a 429 response
+    on every operation; the live served schema documents none.
+observed:
+- surface: GET https://api.pexafy.com/health
+  scope: per-IP (unauthenticated)
+  limit: 100
+  window: unknown — x-ratelimit-reset was ~60s ahead at probe time
+- surface: GET https://api.pexafy.com/api/v1/ (unauthenticated, 401)
+  scope: per-IP (unauthenticated)
+  limit: 60
+  window: unknown — x-ratelimit-reset was ~60s ahead at probe time
+  note: >-
+    The unauthenticated API route is metered more tightly than /health. Both counters ran
+    independently, so the limiter is per-route-class, not a single global bucket.
+- surface: https://pexafy.com/ (website root, browser UA)
+  status: 429
+  note: >-
+    The marketing site itself rate-limits aggressively; a HEAD from a scripted client
+    returned 429. This is a site edge policy, not the API.
+limits:
+- scope: per-account (plan)
+  plan: Free
+  limit: 1200
+  window: hour
+  monthly_quota: 5000
+  api_keys: 1
+- scope: per-account (plan)
+  plan: Starter
+  limit: 1800
+  window: hour
+  monthly_quota: 20000
+  api_keys: 3
+- scope: per-account (plan)
+  plan: Pro
+  limit: 3600
+  window: hour
+  monthly_quota: 70000
+  api_keys: 5
+- scope: per-account (plan)
+  plan: Expert
+  limit: 100
+  window: minute
+  monthly_quota: 150000
+  api_keys: 10
+- scope: per-account (plan)
+  plan: Team
+  limit: 200
+  window: minute
+  monthly_quota: 300000
+  api_keys: 25
+- scope: per-account (plan)
+  plan: Business
+  limit: 300
+  window: minute
+  monthly_quota: 1000000
+  api_keys: unlimited
+- scope: per-account (plan)
+  plan: Enterprise
+  limit: 500
+  window: minute
+  monthly_quota: 2000000
+  api_keys: unlimited
+connector_limits:
+  note: >-
+    The pricing table lists a separate "Connector rate limit" for the WordPress / Chrome /
+    Figma / MCP connectors, at the same numbers as the API rate limit on every tier
+    (1,200/h Free, 1,800/h Starter, 3,600/h Pro, 100/min Expert, 200/min Team, 300/min
+    Business, 500/min Enterprise). The UI itself is metered separately at 60/min on every tier.
+self_service_quota_endpoints:
+- GET /api/v1/usage
+- GET /api/v1/usage/daily
+- GET /api/v1/usage/monthly
+- GET /api/v1/usage/by-key
+quota_note: >-
+  An agent can read its own consumption before it is throttled — the api-onboarding
+  descriptor makes GET /api/v1/usage the third step of its first-run flow explicitly "so an
+  agent can pace itself". The MCP server exposes no equivalent tool.
+gaps:
+- The docs page titled "Errors & rate limits" documents the 429 and the RATE_LIMITED code but publishes no numbers and does not name the X-RateLimit-* headers; the tiers are only on the pricing page and the headers only on the wire.
+- The window length behind x-ratelimit-limit is not stated anywhere; it was inferred from the reset timestamp on a single probe and is recorded as unknown rather than guessed.

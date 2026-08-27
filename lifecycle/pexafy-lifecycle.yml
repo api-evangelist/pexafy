@@ -1,0 +1,87 @@
+generated: '2026-08-27'
+method: searched
+source: https://github.com/Pexafy/pexafy-openapi
+additional_sources:
+- https://raw.githubusercontent.com/Pexafy/pexafy-openapi/main/CHANGELOG.md
+- https://raw.githubusercontent.com/Pexafy/pexafy-openapi/main/waivers.json
+- https://status.pexafy.com
+versioning:
+  scheme: uri-path
+  current: v1
+  description_version: 1.3.0
+  description_versioning: semver, applied to the OpenAPI DESCRIPTION rather than to the URI
+  docs: https://github.com/Pexafy/pexafy-openapi
+  note: >-
+    Two version numbers coexist and mean different things. The URI is pinned at /api/v1 and
+    the live schema's info.version reads "v1.0.0". The pexafy-openapi repo separately
+    versions the DESCRIPTION (1.1.0 -> 1.2.0 -> 1.3.0), keeps every published version under
+    openapi/releases/, and ships the differ at the same version number "so that a pinned
+    version of the package always understands the description it was released beside".
+  published_releases:
+  - 1.1.0
+  - 1.2.0
+  - 1.3.0
+  release_archive: https://github.com/Pexafy/pexafy-openapi/tree/main/openapi/releases
+deprecation:
+  policy_url: https://github.com/Pexafy/pexafy-openapi
+  policy_kind: breaking-change classification + accepted-breakage waivers
+  sunset_header: false
+  deprecation_header: false
+  deprecated_operations: []
+  note: >-
+    There is no RFC 8594 Sunset/Deprecation header support and no dated deprecation
+    calendar, but there IS a real, unusually specific breaking-change policy — and it is
+    executable rather than prose. The pexafy-openapi tool classifies every diff by
+    request-vs-response variance (adding an enum value is additive in a request and
+    breaking in a response), gates a release against a baseline, and records accepted
+    breakage in waivers.json with a reason and an expiry date. One waiver is open:
+    enum.value.added on /components/schemas/Source, expiring 2027-08-01, for the wikimedia
+    value added in 1.3.0 — announced one release ahead in the 1.2.0 notes. Consumers are
+    given x-extensible-enum (since 1.2.0) so a generator can emit an open type.
+  breaking_changes_recorded:
+  - version: 1.3.0
+    change: Source enum gained "wikimedia"
+    class: breaking (response position)
+    announced_in: 1.2.0 release notes
+    waiver_expires: '2027-08-01'
+  - version: 1.3.0
+    change: per_page default moved from 24 to 20
+    class: notable — no wire-contract change, but every caller who never set per_page gets a different page size
+sla:
+  url: null
+  uptime_target: null
+  note: >-
+    The Enterprise tier is advertised as including an SLA, but no SLA document is published
+    at any URL found. The status page publishes measured uptime instead of a commitment.
+status_page:
+  url: https://status.pexafy.com
+  status_at_probe: All systems operational
+  response_time_at_probe: 8 ms
+  uptime_90d: 100.00%
+  http_status: 200
+  self_hosted: true
+  note: Provider-run status page (not Statuspage.io/Instatus), showing a 90-day uptime bar and live response time.
+contract_drift:
+  finding: >-
+    The two first-party OpenAPI documents describe materially different APIs, and the
+    richer one is not the one served.
+  detail:
+  - The served https://api.pexafy.com/openapi.json is the raw FastAPI auto-generated schema — machine-generated operationIds (search_photos_api_v1_search_photos_get), 20 operations, no examples, no x-extensible-enum, and only 200/201/422 responses.
+  - The versioned https://github.com/Pexafy/pexafy-openapi/blob/main/openapi/v1.json is hand-maintained — clean operationIds (searchPhotos), 80 examples, 6 x-extensible-enum markers, and full 400/401/403/404/422/429/500 coverage.
+  - They also disagree on the surface itself. The versioned description puts image search at POST /search/photos/by-image; the live host serves POST /api/v1/search/photos and returns nothing at a by-image path. The versioned description omits the four usage endpoints and /facets/photographers/{username} that the live host serves.
+  consequence: >-
+    A consumer generating a client from the published, richer description will call an
+    endpoint that does not exist; a consumer generating from the served schema gets no
+    error model. Both documents are Pexafy's, both are current, and neither is marked as
+    superseding the other.
+  recommendation: Serve the versioned description at api.pexafy.com/openapi.json, or state which of the two is normative.
+maintenance_signals:
+  github_org_created: '2026-06-20'
+  repos: 3
+  last_pushed:
+    pexafy-openapi: '2026-08-25'
+    pexafy-mcp: '2026-08-23'
+    pexafy-python: '2026-08-20'
+  sdk_currency: >-
+    The Python SDK's latest release (0.1.1, 2026-08-20) is 7 days old at probe time and
+    postdates description 1.2.0 — no abandonment signal anywhere in this provider.

@@ -1,0 +1,84 @@
+generated: '2026-08-27'
+method: searched
+source: openapi/pexafy-api-openapi.json, openapi/pexafy-api-v1-openapi.json
+docs: https://docs.pexafy.com/quickstart
+additional_sources:
+- https://pexafy.com/.well-known/api-onboarding
+- https://pexafy.com/.well-known/oauth-authorization-server
+- https://mcp.pexafy.com/.well-known/oauth-protected-resource
+summary:
+  types:
+  - apiKey
+  - http
+  - oauth2
+  api_key_in:
+  - header
+  oauth2_flows:
+  - authorizationCode
+  note: >-
+    Two surfaces, two credential models. The REST API takes a long-lived API key, sent
+    either as x-api-key or as Authorization: Bearer — the two OpenAPI documents each
+    declare only one of those, but the provider's own api-onboarding descriptor states
+    both work on the same routes, and the live 401 body confirms it
+    ("Authentication required (Bearer token or X-Api-Key)"). The hosted MCP server takes
+    OAuth 2.1 with dynamic client registration and PKCE, or the same API key as a bearer
+    token for clients that cannot do OAuth.
+schemes:
+- name: ApiKeyAuth
+  type: apiKey
+  in: header
+  parameter: x-api-key
+  description: |-
+    Pass your Pexafy API key in this header.
+
+    Get your API key at https://pexafy.com/dashboard/api-keys/create/
+  sources:
+  - openapi/pexafy-api-openapi.json
+- name: apiKey
+  type: http
+  scheme: bearer
+  description: >-
+    Send the key as a bearer token. Keys carry scopes; a read-scoped key gets a 403 on
+    anything under /collections.
+  sources:
+  - openapi/pexafy-api-v1-openapi.json
+- name: PexafyOAuth
+  type: oauth2
+  flows:
+  - flow: authorizationCode
+    authorizationUrl: https://pexafy.com/oauth/authorize/
+    tokenUrl: https://pexafy.com/oauth/token/
+    scopes: [read, write]
+    pkce: S256
+  registration_endpoint: https://pexafy.com/oauth/register
+  revocation_endpoint: https://pexafy.com/oauth/revoke_token/
+  introspection_endpoint: https://pexafy.com/oauth/introspect/
+  issuer: https://pexafy.com/
+  sources:
+  - https://pexafy.com/.well-known/oauth-authorization-server
+  note: >-
+    Not declared in either OpenAPI document — discovered from RFC 8414 metadata. It is the
+    credential model for the MCP server (mcp.pexafy.com), which advertises it via RFC 9728
+    protected-resource metadata and a WWW-Authenticate challenge on an unauthenticated
+    tools/list.
+key_lifecycle:
+  issuance: >-
+    Console only. Create an account at https://pexafy.com/signup/, then create a key at
+    https://pexafy.com/dashboard/api-keys/create/. Issued immediately — no application
+    form, no review queue.
+  programmatic_issuance: false
+  one_time_display: true
+  rotation: Create a new key and revoke the old one from https://pexafy.com/dashboard/api-keys/
+  env_var: PEXAFY_API_KEY
+  key_prefix: pexafy_api_
+  keys_per_plan: 1 on Free, 3 Starter, 5 Pro, 10 Expert, 25 Team, unlimited on Business and Enterprise
+unauthenticated_surface:
+- endpoint: GET https://api.pexafy.com/health
+  status: 200
+  note: Public liveness check — the api-onboarding flow uses it as the pre-flight probe before spending a key.
+- endpoint: GET https://mcp.pexafy.com/health
+  note: Public liveness check for the MCP server, per the pexafy-mcp README.
+gaps:
+- The live /openapi.json declares ApiKeyAuth per-operation on all 20 operations but has no root-level `security` and no 401 response anywhere, so a generated client knows a credential is needed and still has no error shape for a missing one.
+- The two published OpenAPI documents disagree on the scheme name and type (ApiKeyAuth/apiKey-header vs apiKey/http-bearer) for the same credential.
+- OAuth 2.1 is not represented in either OpenAPI document.

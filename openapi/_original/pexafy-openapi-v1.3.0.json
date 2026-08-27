@@ -1,0 +1,2895 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Pexafy API",
+    "version": "1.3.0",
+    "summary": "Semantic search over a catalogue of freely licensed stock photography.",
+    "description": "Search runs on meaning rather than keywords, so queries read like sentences and filters narrow what the ranking already found.\n\nEvery response is an envelope: `success`, then `data`, then `pagination` on the list endpoints and `meta` everywhere. Failures use the same envelope with an `error` object whose `code` is stable across versions. Branch on the code, never on the message.\n\nEnums marked `x-extensible-enum` grow between releases. Parse them as open strings; a client whose type is a closed set will fail the day a value is added.",
+    "license": {
+      "name": "MIT",
+      "identifier": "MIT"
+    },
+    "contact": {
+      "name": "Pexafy",
+      "url": "https://pexafy.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.pexafy.com/api/v1",
+      "description": "Production"
+    }
+  ],
+  "tags": [
+    {
+      "name": "search",
+      "description": "Finding photos."
+    },
+    {
+      "name": "photos",
+      "description": "One photo at a time."
+    },
+    {
+      "name": "facets",
+      "description": "What the filters accept."
+    },
+    {
+      "name": "collections",
+      "description": "Saved sets, owned by an API key."
+    },
+    {
+      "name": "usage",
+      "description": "Quota counters."
+    }
+  ],
+  "security": [
+    {
+      "apiKey": []
+    }
+  ],
+  "paths": {
+    "/search/photos": {
+      "get": {
+        "operationId": "searchPhotos",
+        "tags": [
+          "search"
+        ],
+        "summary": "Search photos by describing them",
+        "description": "Ranking is semantic, not keyword based, so a full sentence outranks a pile of nouns: 'two people hiking on a ridge at dawn' carries the relationships between the words and 'hiking dawn people' throws them away.\n\nFilters are applied after the semantic match, which means a narrow filter on a broad query returns fewer results than the same filter on a narrow query. There is no total count and no page number; follow pagination.next_cursor.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "What you are looking for, in words.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 400
+            },
+            "required": true
+          },
+          {
+            "name": "color_name",
+            "in": "query",
+            "description": "Restrict to one dominant colour. The API filters on a single colour; passing several is rejected rather than silently using the last one.",
+            "schema": {
+              "$ref": "#/components/schemas/ColorName"
+            }
+          },
+          {
+            "name": "color_hex",
+            "in": "query",
+            "description": "Restrict to photos near one hex colour, used with color_tolerance.",
+            "schema": {
+              "type": "string",
+              "pattern": "^#?[0-9a-fA-F]{6}$"
+            }
+          },
+          {
+            "name": "color_tolerance",
+            "in": "query",
+            "description": "How far from color_hex a photo may sit, in the same units as the colour distance the indexer stores.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "orientation",
+            "in": "query",
+            "description": "One or more orientations. Repeat the parameter or pass a comma separated list.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Orientation"
+              },
+              "maxItems": 3
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "description": "Restrict to one or more upstream libraries.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Source"
+              },
+              "maxItems": 8
+            }
+          },
+          {
+            "name": "license_type",
+            "in": "query",
+            "description": "Restrict to one or more licence families.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/LicenseType"
+              },
+              "maxItems": 8
+            }
+          },
+          {
+            "name": "photographer",
+            "in": "query",
+            "description": "Restrict to one photographer, by username.",
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "description": "Results per page.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 80,
+              "default": 20
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Hard ceiling on results across all pages of this query.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          },
+          {
+            "name": "score_threshold",
+            "in": "query",
+            "description": "Drop results whose relevance score is below this. Search is semantic, so every query returns something; this is how you decide it returned nothing useful.",
+            "schema": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque cursor from pagination.next_cursor. Cursors are tied to the query that produced them and expire; treat them as single use.",
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma separated list of Photo fields to return. Trims the payload, does not change ranking.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "after_date",
+            "in": "query",
+            "description": "Only photos uploaded on or after this date.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "description": "Ordering. Defaults to relevance.",
+            "schema": {
+              "$ref": "#/components/schemas/SortBy"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One page of ranked results.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Echoed in error payloads; quote it in a support request.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Calls left in the current window.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchEnvelope"
+                },
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "photo_id": "0192f3a1-6c1e-7a3b-9f2d-4c8e1b5a7d20",
+                      "image_url": "https://cdn.pexafy.com/p/0192f3a1/regular.jpg",
+                      "urls": {
+                        "thumb": "https://cdn.pexafy.com/p/0192f3a1/thumb.jpg",
+                        "small": "https://cdn.pexafy.com/p/0192f3a1/small.jpg",
+                        "regular": "https://cdn.pexafy.com/p/0192f3a1/regular.jpg",
+                        "large": "https://cdn.pexafy.com/p/0192f3a1/large.jpg",
+                        "full": "https://cdn.pexafy.com/p/0192f3a1/full.jpg"
+                      },
+                      "width": 5472,
+                      "height": 3648,
+                      "orientation": "landscape",
+                      "color_name": "blue",
+                      "color_hex": "#2f4f6f",
+                      "photographer_username": "a-photographer",
+                      "source": "unsplash",
+                      "license_type": "unsplash",
+                      "alt_description": "an empty office lit only by monitors",
+                      "relevance_score": 0.71
+                    }
+                  ],
+                  "pagination": {
+                    "next_cursor": "c2NvcmU6MC42MQ",
+                    "per_page": 20,
+                    "has_more": true
+                  },
+                  "meta": {
+                    "request_id": "req_01J8Z3",
+                    "took_ms": 61.4
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request could not be parsed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "bad_request",
+                    "message": "The request could not be parsed.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The API key is missing, malformed or revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "unauthenticated",
+                    "message": "The API key is missing, malformed or revoked.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key is valid but lacks the scope for this call.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "forbidden",
+                    "message": "The key is valid but lacks the scope for this call.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A parameter was rejected before the search ran.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "A parameter was rejected before the search ran.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests, or the plan quota is exhausted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Too many requests, or the plan quota is exhausted.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Something broke on our side.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "internal_error",
+                    "message": "Something broke on our side.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search/photos/by-image": {
+      "post": {
+        "operationId": "searchPhotosByImage",
+        "tags": [
+          "search"
+        ],
+        "summary": "Search photos by handing over an image",
+        "description": "The image is embedded and matched against the same vector space as a text query, so the two are interchangeable as far as ranking is concerned. The image is not stored.\n\nSend either a file or a URL, not both. Anything over 10 MB is rejected before it reaches the encoder.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "image": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "per_page": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 80,
+                    "default": 20
+                  },
+                  "orientation": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Orientation"
+                    }
+                  },
+                  "source": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Source"
+                    }
+                  },
+                  "score_threshold": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "One page of results ranked against the image.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Echoed in error payloads; quote it in a support request.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Calls left in the current window.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchEnvelope"
+                },
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "photo_id": "0192f3a1-6c1e-7a3b-9f2d-4c8e1b5a7d20",
+                      "image_url": "https://cdn.pexafy.com/p/0192f3a1/regular.jpg",
+                      "urls": {
+                        "thumb": "https://cdn.pexafy.com/p/0192f3a1/thumb.jpg",
+                        "small": "https://cdn.pexafy.com/p/0192f3a1/small.jpg",
+                        "regular": "https://cdn.pexafy.com/p/0192f3a1/regular.jpg",
+                        "large": "https://cdn.pexafy.com/p/0192f3a1/large.jpg",
+                        "full": "https://cdn.pexafy.com/p/0192f3a1/full.jpg"
+                      },
+                      "width": 5472,
+                      "height": 3648,
+                      "orientation": "landscape",
+                      "color_name": "blue",
+                      "color_hex": "#2f4f6f",
+                      "photographer_username": "a-photographer",
+                      "source": "unsplash",
+                      "license_type": "unsplash",
+                      "alt_description": "an empty office lit only by monitors",
+                      "relevance_score": 0.71
+                    }
+                  ],
+                  "pagination": {
+                    "next_cursor": "c2NvcmU6MC42MQ",
+                    "per_page": 20,
+                    "has_more": true
+                  },
+                  "meta": {
+                    "request_id": "req_01J8Z3",
+                    "took_ms": 61.4
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request could not be parsed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "bad_request",
+                    "message": "The request could not be parsed.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The API key is missing, malformed or revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "unauthenticated",
+                    "message": "The API key is missing, malformed or revoked.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key is valid but lacks the scope for this call.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "forbidden",
+                    "message": "The key is valid but lacks the scope for this call.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A parameter was rejected before the search ran.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "A parameter was rejected before the search ran.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests, or the plan quota is exhausted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Too many requests, or the plan quota is exhausted.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Something broke on our side.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "internal_error",
+                    "message": "Something broke on our side.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/photos/{photo_id}": {
+      "get": {
+        "operationId": "getPhoto",
+        "tags": [
+          "photos"
+        ],
+        "summary": "Fetch one photo",
+        "parameters": [
+          {
+            "name": "photo_id",
+            "in": "path",
+            "description": "UUIDv7 of the photo.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The photo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The API key is missing, malformed or revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "unauthenticated",
+                    "message": "The API key is missing, malformed or revoked.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "not_found",
+                    "message": "No such resource.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests, or the plan quota is exhausted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Too many requests, or the plan quota is exhausted.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/photos/{photo_id}/similar": {
+      "get": {
+        "operationId": "getSimilarPhotos",
+        "tags": [
+          "photos"
+        ],
+        "summary": "Photos that look like this one",
+        "description": "Nearest neighbours of the photo's own image vector. The photo itself is excluded from its own results, which is worth knowing if you are counting on per_page results and getting per_page minus one.",
+        "parameters": [
+          {
+            "name": "photo_id",
+            "in": "path",
+            "description": "UUIDv7 of the photo.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true
+          },
+          {
+            "name": "color_name",
+            "in": "query",
+            "description": "Restrict to one dominant colour. The API filters on a single colour; passing several is rejected rather than silently using the last one.",
+            "schema": {
+              "$ref": "#/components/schemas/ColorName"
+            }
+          },
+          {
+            "name": "color_hex",
+            "in": "query",
+            "description": "Restrict to photos near one hex colour, used with color_tolerance.",
+            "schema": {
+              "type": "string",
+              "pattern": "^#?[0-9a-fA-F]{6}$"
+            }
+          },
+          {
+            "name": "color_tolerance",
+            "in": "query",
+            "description": "How far from color_hex a photo may sit, in the same units as the colour distance the indexer stores.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "orientation",
+            "in": "query",
+            "description": "One or more orientations. Repeat the parameter or pass a comma separated list.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Orientation"
+              },
+              "maxItems": 3
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "description": "Restrict to one or more upstream libraries.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Source"
+              },
+              "maxItems": 8
+            }
+          },
+          {
+            "name": "license_type",
+            "in": "query",
+            "description": "Restrict to one or more licence families.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/LicenseType"
+              },
+              "maxItems": 8
+            }
+          },
+          {
+            "name": "photographer",
+            "in": "query",
+            "description": "Restrict to one photographer, by username.",
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "description": "Results per page.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 80,
+              "default": 20
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Hard ceiling on results across all pages of this query.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          },
+          {
+            "name": "score_threshold",
+            "in": "query",
+            "description": "Drop results whose relevance score is below this. Search is semantic, so every query returns something; this is how you decide it returned nothing useful.",
+            "schema": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque cursor from pagination.next_cursor. Cursors are tied to the query that produced them and expire; treat them as single use.",
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma separated list of Photo fields to return. Trims the payload, does not change ranking.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "after_date",
+            "in": "query",
+            "description": "Only photos uploaded on or after this date.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "description": "Ordering. Defaults to relevance.",
+            "schema": {
+              "$ref": "#/components/schemas/SortBy"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Neighbours, closest first.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Echoed in error payloads; quote it in a support request.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Calls left in the current window.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchEnvelope"
+                },
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "photo_id": "0192f3a1-6c1e-7a3b-9f2d-4c8e1b5a7d20",
+                      "image_url": "https://cdn.pexafy.com/p/0192f3a1/regular.jpg",
+                      "urls": {
+                        "thumb": "https://cdn.pexafy.com/p/0192f3a1/thumb.jpg",
+                        "small": "https://cdn.pexafy.com/p/0192f3a1/small.jpg",
+                        "regular": "https://cdn.pexafy.com/p/0192f3a1/regular.jpg",
+                        "large": "https://cdn.pexafy.com/p/0192f3a1/large.jpg",
+                        "full": "https://cdn.pexafy.com/p/0192f3a1/full.jpg"
+                      },
+                      "width": 5472,
+                      "height": 3648,
+                      "orientation": "landscape",
+                      "color_name": "blue",
+                      "color_hex": "#2f4f6f",
+                      "photographer_username": "a-photographer",
+                      "source": "unsplash",
+                      "license_type": "unsplash",
+                      "alt_description": "an empty office lit only by monitors",
+                      "relevance_score": 0.71
+                    }
+                  ],
+                  "pagination": {
+                    "next_cursor": "c2NvcmU6MC42MQ",
+                    "per_page": 20,
+                    "has_more": true
+                  },
+                  "meta": {
+                    "request_id": "req_01J8Z3",
+                    "took_ms": 61.4
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The API key is missing, malformed or revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "unauthenticated",
+                    "message": "The API key is missing, malformed or revoked.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "not_found",
+                    "message": "No such resource.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A parameter was rejected before the search ran.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "A parameter was rejected before the search ran.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests, or the plan quota is exhausted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Too many requests, or the plan quota is exhausted.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/facets/colors": {
+      "get": {
+        "operationId": "listColors",
+        "tags": [
+          "facets"
+        ],
+        "summary": "Allowed colour filters",
+        "description": "The colour names color_name accepts.",
+        "responses": {
+          "200": {
+            "description": "The allowed values and how much of the catalogue each covers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacetEnvelope"
+                },
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "value": "blue",
+                      "label": "Blue",
+                      "count": 1840221
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The API key is missing, malformed or revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "unauthenticated",
+                    "message": "The API key is missing, malformed or revoked.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests, or the plan quota is exhausted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Too many requests, or the plan quota is exhausted.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/facets/sources": {
+      "get": {
+        "operationId": "listSources",
+        "tags": [
+          "facets"
+        ],
+        "summary": "Indexed libraries",
+        "description": "The libraries source accepts. This list grows.",
+        "responses": {
+          "200": {
+            "description": "The allowed values and how much of the catalogue each covers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacetEnvelope"
+                },
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "value": "blue",
+                      "label": "Blue",
+                      "count": 1840221
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The API key is missing, malformed or revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "unauthenticated",
+                    "message": "The API key is missing, malformed or revoked.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests, or the plan quota is exhausted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Too many requests, or the plan quota is exhausted.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/facets/orientations": {
+      "get": {
+        "operationId": "listOrientations",
+        "tags": [
+          "facets"
+        ],
+        "summary": "Allowed orientations",
+        "description": "The values orientation accepts.",
+        "responses": {
+          "200": {
+            "description": "The allowed values and how much of the catalogue each covers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacetEnvelope"
+                },
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "value": "blue",
+                      "label": "Blue",
+                      "count": 1840221
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The API key is missing, malformed or revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "unauthenticated",
+                    "message": "The API key is missing, malformed or revoked.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests, or the plan quota is exhausted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Too many requests, or the plan quota is exhausted.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/facets/licenses": {
+      "get": {
+        "operationId": "listLicenses",
+        "tags": [
+          "facets"
+        ],
+        "summary": "Allowed licence families",
+        "description": "The values license_type accepts, with what each permits.",
+        "responses": {
+          "200": {
+            "description": "The allowed values and how much of the catalogue each covers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacetEnvelope"
+                },
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "value": "blue",
+                      "label": "Blue",
+                      "count": 1840221
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The API key is missing, malformed or revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "unauthenticated",
+                    "message": "The API key is missing, malformed or revoked.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests, or the plan quota is exhausted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Too many requests, or the plan quota is exhausted.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/facets/photographers/suggest": {
+      "get": {
+        "operationId": "suggestPhotographers",
+        "tags": [
+          "facets"
+        ],
+        "summary": "Autocomplete a photographer name",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Prefix of a username or a display name.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "required": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "How many suggestions to return.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching photographers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotographerEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The API key is missing, malformed or revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "unauthenticated",
+                    "message": "The API key is missing, malformed or revoked.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A parameter was rejected before the search ran.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "A parameter was rejected before the search ran.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests, or the plan quota is exhausted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Too many requests, or the plan quota is exhausted.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/facets/photographers/{username}": {
+      "get": {
+        "operationId": "getPhotographer",
+        "tags": [
+          "facets"
+        ],
+        "summary": "One photographer",
+        "description": "Returns a list because one username can exist in more than one upstream library, and they are different people often enough to matter.",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "description": "Photographer username.",
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Everyone holding that username.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotographerEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The API key is missing, malformed or revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "unauthenticated",
+                    "message": "The API key is missing, malformed or revoked.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "not_found",
+                    "message": "No such resource.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests, or the plan quota is exhausted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Too many requests, or the plan quota is exhausted.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/collections": {
+      "get": {
+        "operationId": "listCollections",
+        "tags": [
+          "collections"
+        ],
+        "summary": "Collections owned by the calling key",
+        "responses": {
+          "200": {
+            "description": "Your collections.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionListEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The API key is missing, malformed or revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "unauthenticated",
+                    "message": "The API key is missing, malformed or revoked.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests, or the plan quota is exhausted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Too many requests, or the plan quota is exhausted.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createCollection",
+        "tags": [
+          "collections"
+        ],
+        "summary": "Create a collection",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollectionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The created collection.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request could not be parsed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "bad_request",
+                    "message": "The request could not be parsed.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The API key is missing, malformed or revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "unauthenticated",
+                    "message": "The API key is missing, malformed or revoked.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A parameter was rejected before the search ran.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "A parameter was rejected before the search ran.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests, or the plan quota is exhausted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Too many requests, or the plan quota is exhausted.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/collections/{collection_id}": {
+      "get": {
+        "operationId": "getCollection",
+        "tags": [
+          "collections"
+        ],
+        "summary": "One collection",
+        "parameters": [
+          {
+            "name": "collection_id",
+            "in": "path",
+            "description": "Collection id.",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The collection.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The API key is missing, malformed or revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "unauthenticated",
+                    "message": "The API key is missing, malformed or revoked.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key is valid but lacks the scope for this call.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "forbidden",
+                    "message": "The key is valid but lacks the scope for this call.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "not_found",
+                    "message": "No such resource.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests, or the plan quota is exhausted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Too many requests, or the plan quota is exhausted.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteCollection",
+        "tags": [
+          "collections"
+        ],
+        "summary": "Delete a collection",
+        "description": "Deleting a collection does not delete anything else; the photos are not yours.",
+        "parameters": [
+          {
+            "name": "collection_id",
+            "in": "path",
+            "description": "Collection id.",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Gone."
+          },
+          "401": {
+            "description": "The API key is missing, malformed or revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "unauthenticated",
+                    "message": "The API key is missing, malformed or revoked.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key is valid but lacks the scope for this call.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "forbidden",
+                    "message": "The key is valid but lacks the scope for this call.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "not_found",
+                    "message": "No such resource.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests, or the plan quota is exhausted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Too many requests, or the plan quota is exhausted.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/collections/{collection_id}/photos": {
+      "post": {
+        "operationId": "addPhotoToCollection",
+        "tags": [
+          "collections"
+        ],
+        "summary": "Add a photo to a collection",
+        "parameters": [
+          {
+            "name": "collection_id",
+            "in": "path",
+            "description": "Collection id.",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "photo_id"
+                ],
+                "properties": {
+                  "photo_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              },
+              "example": {
+                "photo_id": "0192f3a1-6c1e-7a3b-9f2d-4c8e1b5a7d20"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The new membership.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionItemEnvelope"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "The photo was already in the collection; adding it again is not an error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionItemEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The API key is missing, malformed or revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "unauthenticated",
+                    "message": "The API key is missing, malformed or revoked.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key is valid but lacks the scope for this call.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "forbidden",
+                    "message": "The key is valid but lacks the scope for this call.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "not_found",
+                    "message": "No such resource.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A parameter was rejected before the search ran.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "validation_failed",
+                    "message": "A parameter was rejected before the search ran.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests, or the plan quota is exhausted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Too many requests, or the plan quota is exhausted.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/collections/{collection_id}/photos/{photo_id}": {
+      "delete": {
+        "operationId": "removePhotoFromCollection",
+        "tags": [
+          "collections"
+        ],
+        "summary": "Remove a photo from a collection",
+        "parameters": [
+          {
+            "name": "collection_id",
+            "in": "path",
+            "description": "Collection id.",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "required": true
+          },
+          {
+            "name": "photo_id",
+            "in": "path",
+            "description": "UUIDv7 of the photo.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Gone."
+          },
+          "401": {
+            "description": "The API key is missing, malformed or revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "unauthenticated",
+                    "message": "The API key is missing, malformed or revoked.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key is valid but lacks the scope for this call.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "forbidden",
+                    "message": "The key is valid but lacks the scope for this call.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "not_found",
+                    "message": "No such resource.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests, or the plan quota is exhausted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Too many requests, or the plan quota is exhausted.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/usage": {
+      "get": {
+        "operationId": "getUsage",
+        "tags": [
+          "usage"
+        ],
+        "summary": "Quota counters for the current period",
+        "description": "Counters are updated on write and may lag a call or two behind under load. Do not use them to decide whether the next request will succeed; use the 429 and the Retry-After header.",
+        "responses": {
+          "200": {
+            "description": "Current usage.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The API key is missing, malformed or revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "unauthenticated",
+                    "message": "The API key is missing, malformed or revoked.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests, or the plan quota is exhausted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Too many requests, or the plan quota is exhausted.",
+                    "request_id": "req_01J8Z3"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Send the key as a bearer token. Keys carry scopes; a read scoped key gets a 403 on anything under /collections."
+      }
+    },
+    "schemas": {
+      "ErrorEnvelope": {
+        "type": "object",
+        "required": [
+          "success",
+          "error"
+        ],
+        "description": "Every failure uses this shape, whatever the status code.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          },
+          "error": {
+            "type": "object",
+            "required": [
+              "code",
+              "message"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Machine readable and stable across versions. Branch on this, not on the message. The set is extensible: treat an unrecognised code as a generic failure of its status class.",
+                "example": "validation_failed"
+              },
+              "message": {
+                "type": "string",
+                "description": "Human readable, not stable."
+              },
+              "request_id": {
+                "type": "string"
+              },
+              "field": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Which parameter was rejected, when the failure is about one."
+              }
+            }
+          }
+        }
+      },
+      "Meta": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "took_ms": {
+            "type": "number",
+            "description": "Server side time, excluding transfer."
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "required": [
+          "per_page",
+          "has_more"
+        ],
+        "description": "Cursor paging. There is no total count: the result set is a ranked stream and counting it would cost more than returning it.",
+        "properties": {
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "per_page": {
+            "type": "integer"
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Orientation": {
+        "type": "string",
+        "enum": [
+          "landscape",
+          "portrait",
+          "square"
+        ],
+        "x-extensible-enum": true,
+        "description": "Extensible: new orientations may be added."
+      },
+      "Source": {
+        "type": "string",
+        "enum": [
+          "pexels",
+          "unsplash",
+          "pixabay",
+          "wikimedia"
+        ],
+        "x-extensible-enum": true,
+        "description": "Upstream library. Extensible: this list grows as libraries are indexed, so parse it as an open string."
+      },
+      "LicenseType": {
+        "type": "string",
+        "enum": [
+          "cc0",
+          "unsplash",
+          "pexels",
+          "pixabay",
+          "cc-by",
+          "cc-by-sa"
+        ],
+        "x-extensible-enum": true,
+        "description": "Extensible."
+      },
+      "ColorName": {
+        "type": "string",
+        "enum": [
+          "black",
+          "white",
+          "grey",
+          "red",
+          "orange",
+          "yellow",
+          "green",
+          "teal",
+          "blue",
+          "purple",
+          "pink",
+          "brown"
+        ],
+        "x-extensible-enum": true,
+        "description": "Extensible."
+      },
+      "SortBy": {
+        "type": "string",
+        "enum": [
+          "relevance",
+          "recent",
+          "popular"
+        ],
+        "default": "relevance",
+        "x-extensible-enum": true,
+        "description": "Extensible."
+      },
+      "PhotoUrls": {
+        "type": "object",
+        "required": [
+          "thumb",
+          "small",
+          "regular",
+          "large",
+          "full"
+        ],
+        "description": "The same image at five widths. Pick the smallest one that fits; the CDN charges you nothing for it but the upstream library counts a view either way.",
+        "properties": {
+          "thumb": {
+            "type": "string",
+            "format": "uri"
+          },
+          "small": {
+            "type": "string",
+            "format": "uri"
+          },
+          "regular": {
+            "type": "string",
+            "format": "uri"
+          },
+          "large": {
+            "type": "string",
+            "format": "uri"
+          },
+          "full": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "Attribution": {
+        "type": "object",
+        "description": "Credit line, ready to drop into a page. Most upstream licences require it even when they do not require a link.",
+        "properties": {
+          "html": {
+            "type": "string"
+          },
+          "plain": {
+            "type": "string"
+          }
+        }
+      },
+      "Photo": {
+        "type": "object",
+        "required": [
+          "photo_id",
+          "urls",
+          "source",
+          "license_type"
+        ],
+        "properties": {
+          "photo_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUIDv7. Sortable by creation time, which is why it is not an integer."
+          },
+          "image_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "urls": {
+            "$ref": "#/components/schemas/PhotoUrls"
+          },
+          "width": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "height": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "blur_hash": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Placeholder while loading."
+          },
+          "orientation": {
+            "$ref": "#/components/schemas/Orientation"
+          },
+          "color_name": {
+            "$ref": "#/components/schemas/ColorName"
+          },
+          "color_hex": {
+            "type": "string"
+          },
+          "photographer_username": {
+            "type": "string"
+          },
+          "photographer_full_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "photographer_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Source"
+          },
+          "license_type": {
+            "$ref": "#/components/schemas/LicenseType"
+          },
+          "source_image_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          },
+          "source_description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "alt_description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Short text for an alt attribute. Null for a large part of the catalogue; fall back to description, then to source_description, then to nothing rather than to the filename."
+          },
+          "uploaded_on": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "relevance_score": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Only present on search results. Comparable within one response and not across responses: the scores are normalised per query."
+          },
+          "attribution": {
+            "$ref": "#/components/schemas/Attribution"
+          }
+        },
+        "example": {
+          "photo_id": "0192f3a1-6c1e-7a3b-9f2d-4c8e1b5a7d20",
+          "urls": {
+            "regular": "https://cdn.pexafy.com/p/0192f3a1/regular.jpg"
+          },
+          "source": "unsplash",
+          "license_type": "unsplash"
+        }
+      },
+      "Photographer": {
+        "type": "object",
+        "required": [
+          "username"
+        ],
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "full_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "$ref": "#/components/schemas/Source"
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          },
+          "photos_count": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "example": {
+          "username": "a-photographer",
+          "source": "unsplash",
+          "photos_count": 412
+        }
+      },
+      "Facet": {
+        "type": "object",
+        "required": [
+          "value"
+        ],
+        "description": "One allowed value of a filter, with how much of the catalogue it covers. Read these rather than hard coding the lists.",
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "example": {
+          "value": "blue",
+          "label": "Blue",
+          "count": 1840221
+        }
+      },
+      "Collection": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          },
+          "is_public": {
+            "type": "boolean",
+            "default": false
+          },
+          "cover_photo_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "photos_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "example": {
+          "id": 8814,
+          "name": "office interiors",
+          "is_public": false,
+          "photos_count": 37
+        }
+      },
+      "CollectionInput": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "description": "What a client may set on a collection. Deliberately not the same component as Collection: sharing one would make every added response field an edit to the request contract as well.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          },
+          "is_public": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "example": {
+          "name": "office interiors",
+          "is_public": false
+        }
+      },
+      "CollectionItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "photo_id"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "photo_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "photo_thumbnail_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          },
+          "photo_source": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "photo_photographer": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "added_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "example": {
+          "id": 5,
+          "photo_id": "0192f3a1-6c1e-7a3b-9f2d-4c8e1b5a7d20"
+        }
+      },
+      "Usage": {
+        "type": "object",
+        "description": "Quota counters for the calling key's account.",
+        "properties": {
+          "plan": {
+            "type": "string"
+          },
+          "period_start": {
+            "type": "string",
+            "format": "date"
+          },
+          "period_end": {
+            "type": "string",
+            "format": "date"
+          },
+          "searches": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "searches_limit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "Null on plans with no ceiling."
+          },
+          "downloads": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "downloads_limit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          }
+        },
+        "example": {
+          "plan": "starter",
+          "searches": 4120,
+          "searches_limit": 10000
+        }
+      },
+      "SearchEnvelope": {
+        "type": "object",
+        "required": [
+          "success",
+          "data",
+          "pagination"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Photo"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        }
+      },
+      "PhotoEnvelope": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Photo"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "example": {
+          "success": true,
+          "data": {
+            "photo_id": "0192f3a1-6c1e-7a3b-9f2d-4c8e1b5a7d20",
+            "urls": {
+              "regular": "https://cdn.pexafy.com/p/0192f3a1/regular.jpg"
+            },
+            "source": "unsplash",
+            "license_type": "unsplash"
+          },
+          "meta": {
+            "request_id": "req_01J8Z3",
+            "took_ms": 4.1
+          }
+        }
+      },
+      "FacetEnvelope": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Facet"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        }
+      },
+      "PhotographerEnvelope": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Photographer"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "example": {
+          "success": true,
+          "data": [
+            {
+              "username": "a-photographer",
+              "source": "unsplash",
+              "photos_count": 412
+            }
+          ]
+        }
+      },
+      "CollectionEnvelope": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Collection"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "example": {
+          "success": true,
+          "data": {
+            "id": 8814,
+            "name": "office interiors",
+            "is_public": false,
+            "photos_count": 37
+          }
+        }
+      },
+      "CollectionListEnvelope": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Collection"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "example": {
+          "success": true,
+          "data": [
+            {
+              "id": 8814,
+              "name": "office interiors",
+              "is_public": false,
+              "photos_count": 37
+            }
+          ]
+        }
+      },
+      "CollectionItemEnvelope": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "$ref": "#/components/schemas/CollectionItem"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "example": {
+          "success": true,
+          "data": {
+            "id": 5,
+            "photo_id": "0192f3a1-6c1e-7a3b-9f2d-4c8e1b5a7d20"
+          }
+        }
+      },
+      "UsageEnvelope": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Usage"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "example": {
+          "success": true,
+          "data": {
+            "plan": "starter",
+            "searches": 4120,
+            "searches_limit": 10000
+          }
+        }
+      }
+    }
+  }
+}

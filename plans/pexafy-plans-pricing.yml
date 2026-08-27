@@ -1,0 +1,133 @@
+generated: '2026-08-27'
+method: searched
+source: https://pexafy.com/pricing/
+corroborated_by: https://pexafy.com/.well-known/api-onboarding
+currency: USD
+billing_periods: [monthly, yearly]
+yearly_discount: "~20% (the pricing page's own wording); yearly prices are billed as one annual charge"
+self_serve: true
+card_required_for_free: false
+plan_count: 7
+plans:
+- name: Free
+  price: 0
+  price_yearly: 0
+  currency: USD
+  period: month
+  included:
+    api_requests_per_month: 5000
+    ui_searches_per_month: 5000
+    api_keys: 1
+    collections: 1
+    search_history: 24h
+    similar_images_preview: 6
+    images_per_search_result: 100
+    enriched_fields: locked
+  limits:
+    api_rate_limit: 1200/hour
+    connector_rate_limit: 1200/hour
+    ui_rate_limit: 60/min
+  support: Email < 48h
+  overage: not published — the pricing page does not state what happens past the monthly quota
+- name: Starter
+  price: 9
+  price_yearly: 8
+  yearly_total: 90
+  currency: USD
+  period: month
+  included:
+    api_requests_per_month: 20000
+    api_keys: 3
+    collections: 3
+    search_history: 7 days
+    enriched_fields: locked
+  limits:
+    api_rate_limit: 1800/hour
+    connector_rate_limit: 1800/hour
+  support: Email < 24h
+- name: Pro
+  price: 29
+  price_yearly: 24
+  yearly_total: 290
+  currency: USD
+  period: month
+  included:
+    api_requests_per_month: 70000
+    api_keys: 5
+    collections: unlimited
+    search_history: 30 days
+    enriched_fields: 6
+  limits:
+    api_rate_limit: 3600/hour
+    connector_rate_limit: 3600/hour
+  support: Email < 24h
+- name: Expert
+  price: 59
+  price_yearly: 49
+  yearly_total: 590
+  currency: USD
+  period: month
+  included:
+    api_requests_per_month: 150000
+    api_keys: 10
+    collections: unlimited
+    search_history: unlimited
+    enriched_fields: 6
+  limits:
+    api_rate_limit: 100/min
+    connector_rate_limit: 100/min
+  support: Priority < 12h
+- name: Team
+  price: 99
+  price_yearly: 82
+  yearly_total: 990
+  currency: USD
+  period: month
+  included:
+    api_requests_per_month: 300000
+    api_keys: 25
+    enriched_fields: 6
+  limits:
+    api_rate_limit: 200/min
+    connector_rate_limit: 200/min
+  support: Priority < 6h
+- name: Business
+  price: 299
+  price_yearly: 249
+  yearly_total: 2990
+  currency: USD
+  period: month
+  included:
+    api_requests_per_month: 1000000
+    api_keys: unlimited
+    enriched_fields: 6
+  limits:
+    api_rate_limit: 300/min
+    connector_rate_limit: 300/min
+  support: Priority < 4h
+- name: Enterprise
+  price: 599
+  price_yearly: 499
+  yearly_total: 5990
+  currency: USD
+  period: month
+  included:
+    api_requests_per_month: 2000000
+    api_keys: unlimited
+    enriched_fields: 6
+  limits:
+    api_rate_limit: 500/min
+    connector_rate_limit: 500/min
+  support: Dedicated TAM
+  note: >-
+    Priced and self-serve like every other tier — this is not a "contact us" gate. The
+    pricing page describes it as "custom capacity and SLA for large organizations", but the
+    SLA document itself is not published.
+notes:
+- Every plan, Free included, gets the full filter set — the pricing FAQ states advanced filters require no upgrade.
+- Enriched API response fields are plan-gated: Free and Starter get the core response shape, Pro and above unlock 6 enriched fields. A 403 PLAN_RESTRICTION is the error an agent sees when it asks for a field its plan does not carry.
+- Anonymous access exists inside the product as a limited preview mode and is explicitly NOT a billable tier.
+- The api-onboarding descriptor publishes the same seven tiers machine-readably, which is unusual — the plan ladder is agent-readable without scraping the pricing page.
+gaps:
+- No overage pricing published: the page never says whether exceeding the monthly quota throttles, blocks, or bills.
+- No published SLA document behind the Enterprise tier's "SLA" claim.
