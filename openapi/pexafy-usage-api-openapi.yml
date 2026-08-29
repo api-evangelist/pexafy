@@ -1,0 +1,463 @@
+openapi: 3.2.0
+info:
+  title: Pexafy Usage API
+  x-refined-note:
+  - x-logo differs across the merged source definitions and was not carried
+  version: '1.0'
+  description: 'Operations tagged usage across 2 of this provider''s published API definitions: pexafy-openapi-v1.3.0.json, pexafy-openapi.json. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://api.pexafy.com/api/v1
+  description: Production
+- url: https://api.pexafy.com
+  description: Production
+tags:
+- name: usage
+  description: Quota counters.
+paths:
+  /usage:
+    get:
+      operationId: getUsage
+      tags:
+      - usage
+      summary: Quota counters for the current period
+      description: Counters are updated on write and may lag a call or two behind under load. Do not use them to decide whether the next request will succeed; use the 429 and the Retry-After header.
+      responses:
+        '200':
+          description: Current usage.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageEnvelope'
+        '401':
+          description: The API key is missing, malformed or revoked.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                error:
+                  code: unauthenticated
+                  message: The API key is missing, malformed or revoked.
+                  request_id: req_01J8Z3
+        '429':
+          description: Too many requests, or the plan quota is exhausted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                error:
+                  code: rate_limited
+                  message: Too many requests, or the plan quota is exhausted.
+                  request_id: req_01J8Z3
+      security:
+      - apiKey: []
+    servers:
+    - url: https://api.pexafy.com/api/v1
+      description: Production
+  /api/v1/usage:
+    get:
+      tags:
+      - usage
+      summary: Current month usage
+      description: 'See how many API requests you have made during the current billing month and how many you have left under your plan. Counters update in real time.
+
+
+        The response contains the `period` (e.g. `2026-06`) and a `requests` object with `used`, `limit` and `remaining`.'
+      operationId: get_usage_api_v1_usage_get
+      parameters: []
+      responses:
+        '200':
+          description: Usage counters for the current month.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - ApiKeyAuth: []
+    servers:
+    - url: https://api.pexafy.com
+      description: Production
+  /api/v1/usage/daily:
+    get:
+      tags:
+      - usage
+      summary: Daily usage history
+      description: Get your request count for each day over a recent window (up to the last 90 days), oldest day first. Useful for drawing a usage chart. Days older than 90 days are not kept.
+      operationId: get_daily_usage_api_v1_usage_daily_get
+      parameters:
+      - name: days
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 90
+          minimum: 1
+          description: How many days back to include, from 1 to 90. Defaults to 30.
+          default: 30
+          title: Days
+        description: How many days back to include, from 1 to 90. Defaults to 30.
+      responses:
+        '200':
+          description: List of daily usage records for the requested period.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyUsageResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - ApiKeyAuth: []
+    servers:
+    - url: https://api.pexafy.com
+      description: Production
+  /api/v1/usage/monthly:
+    get:
+      tags:
+      - usage
+      summary: Monthly usage history
+      description: Get your total request count for each month (up to the last 24), the most recent month first. Useful for tracking long-term usage and billing history.
+      operationId: get_monthly_usage_api_v1_usage_monthly_get
+      parameters:
+      - name: months
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 24
+          minimum: 1
+          description: How many months to include, from 1 to 24. Defaults to 12.
+          default: 12
+          title: Months
+        description: How many months to include, from 1 to 24. Defaults to 12.
+      responses:
+        '200':
+          description: List of monthly usage records.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonthlyUsageResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - ApiKeyAuth: []
+    servers:
+    - url: https://api.pexafy.com
+      description: Production
+  /api/v1/usage/by-key:
+    get:
+      tags:
+      - usage
+      summary: Usage by API key
+      description: Break your usage down by individual API key — see this month's and today's request count for each active key. Handy for spotting which key (or which app) drives the most traffic.
+      operationId: get_usage_by_key_api_v1_usage_by_key_get
+      parameters: []
+      responses:
+        '200':
+          description: List of API keys with their individual usage counters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageByKeyResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - ApiKeyAuth: []
+    servers:
+    - url: https://api.pexafy.com
+      description: Production
+components:
+  schemas:
+    Meta:
+      type: object
+      properties:
+        request_id:
+          type: string
+        took_ms:
+          type: number
+          description: Server side time, excluding transfer.
+    ErrorEnvelope:
+      type: object
+      required:
+      - success
+      - error
+      description: Every failure uses this shape, whatever the status code.
+      properties:
+        success:
+          type: boolean
+          enum:
+          - false
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              description: 'Machine readable and stable across versions. Branch on this, not on the message. The set is extensible: treat an unrecognised code as a generic failure of its status class.'
+              example: validation_failed
+            message:
+              type: string
+              description: Human readable, not stable.
+            request_id:
+              type: string
+            field:
+              type:
+              - string
+              - 'null'
+              description: Which parameter was rejected, when the failure is about one.
+    UsageEnvelope:
+      type: object
+      required:
+      - success
+      - data
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/Usage'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      example:
+        success: true
+        data:
+          plan: starter
+          searches: 4120
+          searches_limit: 10000
+    Usage:
+      type: object
+      description: Quota counters for the calling key's account.
+      properties:
+        plan:
+          type: string
+        period_start:
+          type: string
+          format: date
+        period_end:
+          type: string
+          format: date
+        searches:
+          type: integer
+          minimum: 0
+        searches_limit:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          description: Null on plans with no ceiling.
+        downloads:
+          type: integer
+          minimum: 0
+        downloads_limit:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+      example:
+        plan: starter
+        searches: 4120
+        searches_limit: 10000
+    Meta_2:
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: Unique id for this request (quote it in support tickets).
+        took_ms:
+          type: number
+          description: Server processing time in milliseconds.
+    UsageByKeyResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            keys:
+              type: array
+              items:
+                type: object
+                properties:
+                  key_id:
+                    type: string
+                  name:
+                    type: string
+                  created_at:
+                    type:
+                    - string
+                    - 'null'
+                    format: date-time
+                  last_used_at:
+                    type:
+                    - string
+                    - 'null'
+                    format: date-time
+                  requests_this_month:
+                    type: integer
+                  requests_today:
+                    type: integer
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
+    UsageResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            period:
+              type: string
+              description: YYYY-MM
+            requests:
+              type: object
+              properties:
+                used:
+                  type: integer
+                limit:
+                  type: integer
+                remaining:
+                  type: integer
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
+    MonthlyUsageResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            period_months:
+              type: integer
+            records:
+              type: array
+              items:
+                type: object
+                properties:
+                  month:
+                    type: string
+                    description: YYYY-MM
+                  requests:
+                    type: integer
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
+    DailyUsageResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            period_days:
+              type: integer
+            records:
+              type: array
+              items:
+                type: object
+                properties:
+                  date:
+                    type: string
+                  requests:
+                    type: integer
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ApiError:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code (e.g. `MISSING_PARAMS`, `PHOTO_NOT_FOUND`).
+        message:
+          type: string
+          description: Human-readable error message.
+        request_id:
+          type: string
+      required:
+      - code
+      - message
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+  securitySchemes:
+    apiKey:
+      type: http
+      scheme: bearer
+      description: Send the key as a bearer token. Keys carry scopes; a read scoped key gets a 403 on anything under /collections.
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: 'Pass your Pexafy API key in this header.
+
+
+        Get your API key at [pexafy.com/dashboard/api-keys/create](https://pexafy.com/dashboard/api-keys/create/).'
+x-refined-from:
+- pexafy-openapi-v1.3.0.json
+- pexafy-openapi.json

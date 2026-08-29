@@ -35,31 +35,22 @@ tags:
 - agent-native
 - content licensing
 apis:
-- name: Pexafy API
-  description: REST API for semantic stock-photo search across nine free-licence libraries. Twenty operations over five resources
-    — search (text and image-to-image), photos (lookup and similar), facets (the live filter vocabularies), collections (the
-    only writable surface) and usage (quota counters). Cursor pagination, a single success/error envelope, x-api-key or bearer
-    authentication, and X-RateLimit-* headers on every response.
-  image: https://pexafy.com/static/img/favicon.png
+- aid: pexafy:pexafy-collections-api
+  name: Pexafy Collections API
+  description: Saved sets, owned by an API key.
   humanURL: https://docs.pexafy.com
   baseURL: https://api.pexafy.com
   tags:
-  - images
-  - photos
-  - image search
-  - semantic search
-  - stock photos
+  - collections
   properties:
+  - type: OpenAPI
+    url: openapi/pexafy-collections-api-openapi.yml
   - type: Documentation
     url: https://docs.pexafy.com
   - type: APIReference
     url: https://docs.pexafy.com/api-reference
   - type: GettingStarted
     url: https://docs.pexafy.com/quickstart
-  - type: OpenAPI
-    url: https://api.pexafy.com/openapi.json
-  - type: OpenAPI
-    url: openapi/pexafy-api-openapi.json
   - type: SignUp
     url: https://pexafy.com/signup/
   - type: Pricing
@@ -72,8 +63,134 @@ apis:
     url: https://status.pexafy.com
   - type: LLMSTxt
     url: https://pexafy.com/llms.txt
-  - type: MCPServer
-    url: https://mcp.pexafy.com/mcp
+  - type: APIOnboarding
+    url: https://pexafy.com/.well-known/api-onboarding
+  - type: ToolCrosswalk
+    url: mcp/pexafy-tool-crosswalk.yml
+- aid: pexafy:pexafy-facets-api
+  name: Pexafy Facets API
+  description: What the filters accept.
+  humanURL: https://docs.pexafy.com
+  baseURL: https://api.pexafy.com
+  tags:
+  - facets
+  properties:
+  - type: OpenAPI
+    url: openapi/pexafy-facets-api-openapi.yml
+  - type: Documentation
+    url: https://docs.pexafy.com
+  - type: APIReference
+    url: https://docs.pexafy.com/api-reference
+  - type: GettingStarted
+    url: https://docs.pexafy.com/quickstart
+  - type: SignUp
+    url: https://pexafy.com/signup/
+  - type: Pricing
+    url: https://pexafy.com/pricing/
+  - type: TermsOfService
+    url: https://pexafy.com/legal/terms/
+  - type: PrivacyPolicy
+    url: https://pexafy.com/legal/privacy/
+  - type: StatusPage
+    url: https://status.pexafy.com
+  - type: LLMSTxt
+    url: https://pexafy.com/llms.txt
+  - type: APIOnboarding
+    url: https://pexafy.com/.well-known/api-onboarding
+  - type: ToolCrosswalk
+    url: mcp/pexafy-tool-crosswalk.yml
+- aid: pexafy:pexafy-photos-api
+  name: Pexafy Photos API
+  description: One photo at a time.
+  humanURL: https://docs.pexafy.com
+  baseURL: https://api.pexafy.com
+  tags:
+  - photos
+  properties:
+  - type: OpenAPI
+    url: openapi/pexafy-photos-api-openapi.yml
+  - type: Documentation
+    url: https://docs.pexafy.com
+  - type: APIReference
+    url: https://docs.pexafy.com/api-reference
+  - type: GettingStarted
+    url: https://docs.pexafy.com/quickstart
+  - type: SignUp
+    url: https://pexafy.com/signup/
+  - type: Pricing
+    url: https://pexafy.com/pricing/
+  - type: TermsOfService
+    url: https://pexafy.com/legal/terms/
+  - type: PrivacyPolicy
+    url: https://pexafy.com/legal/privacy/
+  - type: StatusPage
+    url: https://status.pexafy.com
+  - type: LLMSTxt
+    url: https://pexafy.com/llms.txt
+  - type: APIOnboarding
+    url: https://pexafy.com/.well-known/api-onboarding
+  - type: ToolCrosswalk
+    url: mcp/pexafy-tool-crosswalk.yml
+- aid: pexafy:pexafy-search-api
+  name: Pexafy Search API
+  description: Finding photos.
+  humanURL: https://docs.pexafy.com
+  baseURL: https://api.pexafy.com
+  tags:
+  - search
+  properties:
+  - type: OpenAPI
+    url: openapi/pexafy-search-api-openapi.yml
+  - type: Documentation
+    url: https://docs.pexafy.com
+  - type: APIReference
+    url: https://docs.pexafy.com/api-reference
+  - type: GettingStarted
+    url: https://docs.pexafy.com/quickstart
+  - type: SignUp
+    url: https://pexafy.com/signup/
+  - type: Pricing
+    url: https://pexafy.com/pricing/
+  - type: TermsOfService
+    url: https://pexafy.com/legal/terms/
+  - type: PrivacyPolicy
+    url: https://pexafy.com/legal/privacy/
+  - type: StatusPage
+    url: https://status.pexafy.com
+  - type: LLMSTxt
+    url: https://pexafy.com/llms.txt
+  - type: APIOnboarding
+    url: https://pexafy.com/.well-known/api-onboarding
+  - type: ToolCrosswalk
+    url: mcp/pexafy-tool-crosswalk.yml
+- aid: pexafy:pexafy-usage-api
+  name: Pexafy Usage API
+  description: Quota counters.
+  humanURL: https://docs.pexafy.com
+  baseURL: https://api.pexafy.com
+  tags:
+  - usage
+  properties:
+  - type: OpenAPI
+    url: openapi/pexafy-usage-api-openapi.yml
+  - type: Documentation
+    url: https://docs.pexafy.com
+  - type: APIReference
+    url: https://docs.pexafy.com/api-reference
+  - type: GettingStarted
+    url: https://docs.pexafy.com/quickstart
+  - type: SignUp
+    url: https://pexafy.com/signup/
+  - type: Pricing
+    url: https://pexafy.com/pricing/
+  - type: TermsOfService
+    url: https://pexafy.com/legal/terms/
+  - type: PrivacyPolicy
+    url: https://pexafy.com/legal/privacy/
+  - type: StatusPage
+    url: https://status.pexafy.com
+  - type: LLMSTxt
+    url: https://pexafy.com/llms.txt
   - type: APIOnboarding
     url: https://pexafy.com/.well-known/api-onboarding
   - type: ToolCrosswalk
@@ -86,6 +203,8 @@ maintainers:
   LinkedIn: https://www.linkedin.com/company/pexafy
 aid: pexafy
 common:
+- type: MCPServer
+  url: https://mcp.pexafy.com/mcp
 - type: DeveloperPortal
   url: https://docs.pexafy.com
 - type: Support

@@ -1,0 +1,1311 @@
+openapi: 3.2.0
+info:
+  title: Pexafy Search API
+  x-refined-note:
+  - x-logo differs across the merged source definitions and was not carried
+  version: '1.0'
+  description: 'Operations tagged search across 2 of this provider''s published API definitions: pexafy-openapi-v1.3.0.json, pexafy-openapi.json. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://api.pexafy.com/api/v1
+  description: Production
+- url: https://api.pexafy.com
+  description: Production
+tags:
+- name: search
+  description: Finding photos.
+paths:
+  /search/photos:
+    get:
+      operationId: searchPhotos
+      tags:
+      - search
+      summary: Search photos by describing them
+      description: 'Ranking is semantic, not keyword based, so a full sentence outranks a pile of nouns: ''two people hiking on a ridge at dawn'' carries the relationships between the words and ''hiking dawn people'' throws them away.
+
+
+        Filters are applied after the semantic match, which means a narrow filter on a broad query returns fewer results than the same filter on a narrow query. There is no total count and no page number; follow pagination.next_cursor.'
+      parameters:
+      - name: q
+        in: query
+        description: What you are looking for, in words.
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 400
+        required: true
+      - name: color_name
+        in: query
+        description: Restrict to one dominant colour. The API filters on a single colour; passing several is rejected rather than silently using the last one.
+        schema:
+          $ref: '#/components/schemas/ColorName'
+      - name: color_hex
+        in: query
+        description: Restrict to photos near one hex colour, used with color_tolerance.
+        schema:
+          type: string
+          pattern: ^#?[0-9a-fA-F]{6}$
+      - name: color_tolerance
+        in: query
+        description: How far from color_hex a photo may sit, in the same units as the colour distance the indexer stores.
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 20
+      - name: orientation
+        in: query
+        description: One or more orientations. Repeat the parameter or pass a comma separated list.
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/Orientation'
+          maxItems: 3
+      - name: source
+        in: query
+        description: Restrict to one or more upstream libraries.
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/Source'
+          maxItems: 8
+      - name: license_type
+        in: query
+        description: Restrict to one or more licence families.
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseType'
+          maxItems: 8
+      - name: photographer
+        in: query
+        description: Restrict to one photographer, by username.
+        schema:
+          type: string
+          maxLength: 120
+      - name: per_page
+        in: query
+        description: Results per page.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 80
+          default: 20
+      - name: limit
+        in: query
+        description: Hard ceiling on results across all pages of this query.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+      - name: score_threshold
+        in: query
+        description: Drop results whose relevance score is below this. Search is semantic, so every query returns something; this is how you decide it returned nothing useful.
+        schema:
+          type: number
+          minimum: 0
+          maximum: 1
+      - name: cursor
+        in: query
+        description: Opaque cursor from pagination.next_cursor. Cursors are tied to the query that produced them and expire; treat them as single use.
+        schema:
+          type: string
+          maxLength: 512
+      - name: fields
+        in: query
+        description: Comma separated list of Photo fields to return. Trims the payload, does not change ranking.
+        schema:
+          type: string
+      - name: after_date
+        in: query
+        description: Only photos uploaded on or after this date.
+        schema:
+          type: string
+          format: date
+      - name: sort_by
+        in: query
+        description: Ordering. Defaults to relevance.
+        schema:
+          $ref: '#/components/schemas/SortBy'
+      responses:
+        '200':
+          description: One page of ranked results.
+          headers:
+            X-Request-Id:
+              description: Echoed in error payloads; quote it in a support request.
+              schema:
+                type: string
+            X-RateLimit-Remaining:
+              description: Calls left in the current window.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchEnvelope'
+              example:
+                success: true
+                data:
+                - photo_id: 0192f3a1-6c1e-7a3b-9f2d-4c8e1b5a7d20
+                  image_url: https://cdn.pexafy.com/p/0192f3a1/regular.jpg
+                  urls:
+                    thumb: https://cdn.pexafy.com/p/0192f3a1/thumb.jpg
+                    small: https://cdn.pexafy.com/p/0192f3a1/small.jpg
+                    regular: https://cdn.pexafy.com/p/0192f3a1/regular.jpg
+                    large: https://cdn.pexafy.com/p/0192f3a1/large.jpg
+                    full: https://cdn.pexafy.com/p/0192f3a1/full.jpg
+                  width: 5472
+                  height: 3648
+                  orientation: landscape
+                  color_name: blue
+                  color_hex: '#2f4f6f'
+                  photographer_username: a-photographer
+                  source: unsplash
+                  license_type: unsplash
+                  alt_description: an empty office lit only by monitors
+                  relevance_score: 0.71
+                pagination:
+                  next_cursor: c2NvcmU6MC42MQ
+                  per_page: 20
+                  has_more: true
+                meta:
+                  request_id: req_01J8Z3
+                  took_ms: 61.4
+        '400':
+          description: The request could not be parsed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                error:
+                  code: bad_request
+                  message: The request could not be parsed.
+                  request_id: req_01J8Z3
+        '401':
+          description: The API key is missing, malformed or revoked.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                error:
+                  code: unauthenticated
+                  message: The API key is missing, malformed or revoked.
+                  request_id: req_01J8Z3
+        '403':
+          description: The key is valid but lacks the scope for this call.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                error:
+                  code: forbidden
+                  message: The key is valid but lacks the scope for this call.
+                  request_id: req_01J8Z3
+        '422':
+          description: A parameter was rejected before the search ran.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                error:
+                  code: validation_failed
+                  message: A parameter was rejected before the search ran.
+                  request_id: req_01J8Z3
+        '429':
+          description: Too many requests, or the plan quota is exhausted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                error:
+                  code: rate_limited
+                  message: Too many requests, or the plan quota is exhausted.
+                  request_id: req_01J8Z3
+        '500':
+          description: Something broke on our side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                error:
+                  code: internal_error
+                  message: Something broke on our side.
+                  request_id: req_01J8Z3
+      security:
+      - apiKey: []
+    servers:
+    - url: https://api.pexafy.com/api/v1
+      description: Production
+  /search/photos/by-image:
+    post:
+      operationId: searchPhotosByImage
+      tags:
+      - search
+      summary: Search photos by handing over an image
+      description: 'The image is embedded and matched against the same vector space as a text query, so the two are interchangeable as far as ranking is concerned. The image is not stored.
+
+
+        Send either a file or a URL, not both. Anything over 10 MB is rejected before it reaches the encoder.'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                image_url:
+                  type: string
+                  format: uri
+                per_page:
+                  type: integer
+                  minimum: 1
+                  maximum: 80
+                  default: 20
+                orientation:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Orientation'
+                source:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Source'
+                score_threshold:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+      responses:
+        '200':
+          description: One page of results ranked against the image.
+          headers:
+            X-Request-Id:
+              description: Echoed in error payloads; quote it in a support request.
+              schema:
+                type: string
+            X-RateLimit-Remaining:
+              description: Calls left in the current window.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchEnvelope'
+              example:
+                success: true
+                data:
+                - photo_id: 0192f3a1-6c1e-7a3b-9f2d-4c8e1b5a7d20
+                  image_url: https://cdn.pexafy.com/p/0192f3a1/regular.jpg
+                  urls:
+                    thumb: https://cdn.pexafy.com/p/0192f3a1/thumb.jpg
+                    small: https://cdn.pexafy.com/p/0192f3a1/small.jpg
+                    regular: https://cdn.pexafy.com/p/0192f3a1/regular.jpg
+                    large: https://cdn.pexafy.com/p/0192f3a1/large.jpg
+                    full: https://cdn.pexafy.com/p/0192f3a1/full.jpg
+                  width: 5472
+                  height: 3648
+                  orientation: landscape
+                  color_name: blue
+                  color_hex: '#2f4f6f'
+                  photographer_username: a-photographer
+                  source: unsplash
+                  license_type: unsplash
+                  alt_description: an empty office lit only by monitors
+                  relevance_score: 0.71
+                pagination:
+                  next_cursor: c2NvcmU6MC42MQ
+                  per_page: 20
+                  has_more: true
+                meta:
+                  request_id: req_01J8Z3
+                  took_ms: 61.4
+        '400':
+          description: The request could not be parsed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                error:
+                  code: bad_request
+                  message: The request could not be parsed.
+                  request_id: req_01J8Z3
+        '401':
+          description: The API key is missing, malformed or revoked.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                error:
+                  code: unauthenticated
+                  message: The API key is missing, malformed or revoked.
+                  request_id: req_01J8Z3
+        '403':
+          description: The key is valid but lacks the scope for this call.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                error:
+                  code: forbidden
+                  message: The key is valid but lacks the scope for this call.
+                  request_id: req_01J8Z3
+        '422':
+          description: A parameter was rejected before the search ran.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                error:
+                  code: validation_failed
+                  message: A parameter was rejected before the search ran.
+                  request_id: req_01J8Z3
+        '429':
+          description: Too many requests, or the plan quota is exhausted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                error:
+                  code: rate_limited
+                  message: Too many requests, or the plan quota is exhausted.
+                  request_id: req_01J8Z3
+        '500':
+          description: Something broke on our side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              example:
+                success: false
+                error:
+                  code: internal_error
+                  message: Something broke on our side.
+                  request_id: req_01J8Z3
+      security:
+      - apiKey: []
+    servers:
+    - url: https://api.pexafy.com/api/v1
+      description: Production
+  /api/v1/search/photos:
+    get:
+      tags:
+      - search
+      summary: Search photos by text
+      description: 'Search the photo library with **natural language**, not keywords. Pexafy understands the *meaning, mood and story* of a scene, so full descriptive sentences return far better matches than a couple of tags. For example:
+
+
+        - `an old man sitting at a café table he has visited every morning for thirty years`
+
+        - `two people sharing a bench in comfortable silence`
+
+        - `the last sunlight of the day hitting a dusty windowsill`
+
+        - `a child discovering snow for the first time`
+
+
+        Short queries like `mountain sunset` still work, but the more you describe the scene, light and emotion you have in mind, the closer the results.
+
+
+        You can combine your text query with filters (color, orientation, source, license, photographer, date) to narrow the results. **At least one criterion is required**: either a text query (`q`) or one of the filters.
+
+
+        ### What you get back
+
+        A list of photos in `data`. The most useful fields on each photo are:
+
+
+        | Field | Description |
+
+        | --- | --- |
+
+        | `photo_id` | Unique Pexafy identifier — use it with the **Photos** and **Collections** endpoints. |
+
+        | `urls` | Ready-to-use image links in five sizes: `thumb`, `small`, `regular`, `large`, `full`. |
+
+        | `description` / `alt_description` | A short caption and accessibility-friendly text. |
+
+        | `color_name`, `color_hex`, `orientation` | Visual attributes of the photo. |
+
+        | `source`, `license_type` | Where the photo comes from and how it may be used. |
+
+        | `photographer_username`, `attribution` | Credit information. `attribution.html` and `attribution.plain` are ready to display. |
+
+        | `relevance_score` | How closely the photo matches your query, from `0` to `1` (higher is better). |
+
+
+        Results are returned page by page — see the [Pagination](/pagination) guide to fetch the next page.'
+      operationId: search_photos_api_v1_search_photos_get
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Q
+        description: Your search query in plain language — full descriptive sentences work best (e.g. `two people sharing a bench in comfortable silence`), though short queries like `mountain sunset` are fine too. Up to 500 characters. Optional if you provide at least one filter instead.
+      - name: color_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Color Name
+        description: Keep only photos whose dominant color matches this name (e.g. `blue`, `red`, `teal`). Call `GET /api/v1/facets/colors` (see the **Facets** section) to get the list of available color names. Cannot be combined with `color_hex`.
+      - name: color_hex
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Color Hex
+        description: Keep only photos close to this hex color (e.g. `#1E90FF`). Cannot be combined with `color_name`. Use `color_tolerance` to widen or tighten the match.
+      - name: color_tolerance
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            maximum: 255
+            minimum: 0
+          - type: 'null'
+          description: 'How far a photo''s colour may sit from the one you asked for, from `0` (strict) to `255` (very loose). Defaults to `20`. Applies to **both** `color_hex` and `color_name`: for a hex it is the radius around that exact shade, for a name it widens or narrows the colour family. The published spec used to say it applied to `color_hex` only, which was never true of the code.'
+          title: Color Tolerance
+        description: 'How far a photo''s colour may sit from the one you asked for, from `0` (strict) to `255` (very loose). Defaults to `20`. Applies to **both** `color_hex` and `color_name`: for a hex it is the radius around that exact shade, for a name it widens or narrows the colour family.'
+      - name: orientation
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: Orientation
+        description: 'Keep only photos with these shapes: `landscape`, `portrait` and/or `square`. Repeat the parameter to pass several. See `GET /api/v1/facets/orientations`.'
+      - name: source
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: Source
+        description: Keep only photos from these providers (e.g. `Pexels`, `Unsplash`, `Pixabay`). Repeat the parameter to pass several. Call `GET /api/v1/facets/sources` to list every available source.
+      - name: license_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: License Type
+        description: Keep only photos with these license types (e.g. `free`). Call `GET /api/v1/facets/licenses` to list the available license types.
+      - name: per_page
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            maximum: 100
+            minimum: 1
+          - type: 'null'
+          title: Per Page
+        description: Number of photos per page, from 1 to 100. Defaults to 20.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            maximum: 100
+            minimum: 1
+          - type: 'null'
+          description: Maximum TOTAL number of results to return across all pages — NOT the page size (use `per_page` for that). e.g. limit=4 with per_page=2 returns two pages of 2 results, then stops. Omit for no cap.
+          title: Limit
+        description: Maximum TOTAL number of results to return across all pages — NOT the page size (use `per_page` for that). e.g. limit=4 with per_page=2 returns two pages of 2 results, then stops. Omit for no cap.
+      - name: score_threshold
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: number
+            maximum: 1.0
+            minimum: 0.0
+          - type: 'null'
+          title: Score Threshold
+        description: Minimum relevance a photo must reach to appear, from `0` to `1`. Raise it (e.g. `0.3`) to keep only strong matches and drop loosely related photos; leave it unset to get the widest set of results.
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Cursor
+        description: Token used to fetch the next page. Take the `pagination.next_cursor` value from a previous response and pass it back here. See the [Pagination](/pagination) guide.
+      - name: fields
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Fields
+        description: Comma-separated list to return only the fields you need (e.g. `photo_id,urls,attribution`), which makes responses smaller. Omit to get every field your plan allows.
+      - name: after_date
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Only return photos published on or after this date, formatted `YYYY-MM-DD`.
+          title: After Date
+        description: Only return photos published on or after this date, formatted `YYYY-MM-DD`.
+      - name: sort_by
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - enum:
+            - relevance
+            - newest
+            type: string
+          - type: 'null'
+          description: 'Order of the results: `relevance` (default — best match first) or `newest` (most recently added first).'
+          title: Sort By
+        description: 'Order of the results: `relevance` (default — best match first) or `newest` (most recently added first).'
+      - name: photographer
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Only return photos from this photographer's username. Use `GET /api/v1/facets/photographers/suggest` to find usernames.
+          title: Photographer
+        description: Only return photos from this photographer's username. Use `GET /api/v1/facets/photographers/suggest` to find usernames.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhotoListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - ApiKeyAuth: []
+    post:
+      tags:
+      - search
+      summary: Search photos by image
+      description: 'Upload an image and get visually similar photos in return — same subject, composition, colors or style. Ideal for finding alternatives to a photo you already have.
+
+
+        You can also pass a text query (`q`) together with the image to steer the results: the search then balances *what the image looks like* with *what your words describe*. Use `text_alpha` to control that balance.
+
+
+        **Accepted formats:** JPEG, PNG, WebP or AVIF, up to 10 MB.
+
+
+        The same filters as text search are available, and the response has the exact same shape — see **Search photos by text** for the list of fields you get back.'
+      operationId: search_photos_by_image_api_v1_search_photos_post
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          description: Optional words, in plain language, to steer the visual match (e.g. `the same scene but at golden hour` or `warmer and more cheerful`). When set, results match both the picture and your text.
+          title: Q
+        description: Optional words, in plain language, to steer the visual match (e.g. `the same scene but at golden hour` or `warmer and more cheerful`). When set, results match both the picture and your text.
+      - name: text_alpha
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: number
+            maximum: 10.0
+            minimum: 0.0
+          - type: 'null'
+          description: Balance between your text and the image when both are provided, from `0` to `10`. `0` ignores the text (pure visual search), `1.7` (the default) is balanced, and higher values give your words more weight. Has no effect without `q`.
+          title: Text Alpha
+        description: Balance between your text and the image when both are provided, from `0` to `10`. `0` ignores the text (pure visual search), `1.7` (the default) is balanced, and higher values give your words more weight. Has no effect without `q`.
+      - name: color_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Color Name
+        description: Keep only photos whose dominant color matches this name (e.g. `blue`, `red`, `teal`). Call `GET /api/v1/facets/colors` (see the **Facets** section) to get the list of available color names. Cannot be combined with `color_hex`.
+      - name: color_hex
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Color Hex
+        description: Keep only photos close to this hex color (e.g. `#1E90FF`). Cannot be combined with `color_name`. Use `color_tolerance` to widen or tighten the match.
+      - name: color_tolerance
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            maximum: 255
+            minimum: 0
+          - type: 'null'
+          description: 'How far a photo''s colour may sit from the one you asked for, from `0` (strict) to `255` (very loose). Defaults to `20`. Applies to **both** `color_hex` and `color_name`: for a hex it is the radius around that exact shade, for a name it widens or narrows the colour family. The published spec used to say it applied to `color_hex` only, which was never true of the code.'
+          title: Color Tolerance
+        description: 'How far a photo''s colour may sit from the one you asked for, from `0` (strict) to `255` (very loose). Defaults to `20`. Applies to **both** `color_hex` and `color_name`: for a hex it is the radius around that exact shade, for a name it widens or narrows the colour family.'
+      - name: orientation
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: Orientation
+        description: 'Keep only photos with these shapes: `landscape`, `portrait` and/or `square`. Repeat the parameter to pass several. See `GET /api/v1/facets/orientations`.'
+      - name: source
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: Source
+        description: Keep only photos from these providers (e.g. `Pexels`, `Unsplash`, `Pixabay`). Repeat the parameter to pass several. Call `GET /api/v1/facets/sources` to list every available source.
+      - name: license_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: License Type
+        description: Keep only photos with these license types (e.g. `free`). Call `GET /api/v1/facets/licenses` to list the available license types.
+      - name: per_page
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Per Page
+        description: Number of photos per page, from 1 to 100. Defaults to 20.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            maximum: 100
+            minimum: 1
+          - type: 'null'
+          description: Maximum TOTAL number of results to return across all pages — NOT the page size (use `per_page` for that). Omit for no cap.
+          title: Limit
+        description: Maximum TOTAL number of results to return across all pages — NOT the page size (use `per_page` for that). Omit for no cap.
+      - name: score_threshold
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: number
+            maximum: 1.0
+            minimum: 0.0
+          - type: 'null'
+          title: Score Threshold
+        description: Minimum relevance a photo must reach to appear, from `0` to `1`. Raise it (e.g. `0.3`) to keep only strong matches and drop loosely related photos; leave it unset to get the widest set of results.
+      - name: after_date
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Only return photos published on or after this date, formatted `YYYY-MM-DD`.
+          title: After Date
+        description: Only return photos published on or after this date, formatted `YYYY-MM-DD`.
+      - name: sort_by
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - enum:
+            - relevance
+            - newest
+            type: string
+          - type: 'null'
+          description: 'Order of the results: `relevance` (default — best match first) or `newest` (most recently added first).'
+          title: Sort By
+        description: 'Order of the results: `relevance` (default — best match first) or `newest` (most recently added first).'
+      - name: photographer
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Only return photos from this photographer's username. Use `GET /api/v1/facets/photographers/suggest` to find usernames.
+          title: Photographer
+        description: Only return photos from this photographer's username. Use `GET /api/v1/facets/photographers/suggest` to find usernames.
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Token to fetch the next page. Take `pagination.next_cursor` from a previous response and pass it back here — no need to re-upload the image. See the Pagination guide.
+          title: Cursor
+        description: Token to fetch the next page. Take `pagination.next_cursor` from a previous response and pass it back here — no need to re-upload the image. See the Pagination guide.
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_search_photos_by_image_api_v1_search_photos_post'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhotoListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - ApiKeyAuth: []
+    servers:
+    - url: https://api.pexafy.com
+      description: Production
+components:
+  schemas:
+    Meta:
+      type: object
+      properties:
+        request_id:
+          type: string
+        took_ms:
+          type: number
+          description: Server side time, excluding transfer.
+    SearchEnvelope:
+      type: object
+      required:
+      - success
+      - data
+      - pagination
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Photo'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    PhotoUrls:
+      type: object
+      required:
+      - thumb
+      - small
+      - regular
+      - large
+      - full
+      description: The same image at five widths. Pick the smallest one that fits; the CDN charges you nothing for it but the upstream library counts a view either way.
+      properties:
+        thumb:
+          type: string
+          format: uri
+        small:
+          type: string
+          format: uri
+        regular:
+          type: string
+          format: uri
+        large:
+          type: string
+          format: uri
+        full:
+          type: string
+          format: uri
+    Attribution:
+      type: object
+      description: Credit line, ready to drop into a page. Most upstream licences require it even when they do not require a link.
+      properties:
+        html:
+          type: string
+        plain:
+          type: string
+    ColorName:
+      type: string
+      enum:
+      - black
+      - white
+      - grey
+      - red
+      - orange
+      - yellow
+      - green
+      - teal
+      - blue
+      - purple
+      - pink
+      - brown
+      x-extensible-enum: true
+      description: Extensible.
+    SortBy:
+      type: string
+      enum:
+      - relevance
+      - recent
+      - popular
+      default: relevance
+      x-extensible-enum: true
+      description: Extensible.
+    ErrorEnvelope:
+      type: object
+      required:
+      - success
+      - error
+      description: Every failure uses this shape, whatever the status code.
+      properties:
+        success:
+          type: boolean
+          enum:
+          - false
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              description: 'Machine readable and stable across versions. Branch on this, not on the message. The set is extensible: treat an unrecognised code as a generic failure of its status class.'
+              example: validation_failed
+            message:
+              type: string
+              description: Human readable, not stable.
+            request_id:
+              type: string
+            field:
+              type:
+              - string
+              - 'null'
+              description: Which parameter was rejected, when the failure is about one.
+    Pagination:
+      type: object
+      required:
+      - per_page
+      - has_more
+      description: 'Cursor paging. There is no total count: the result set is a ranked stream and counting it would cost more than returning it.'
+      properties:
+        next_cursor:
+          type:
+          - string
+          - 'null'
+        per_page:
+          type: integer
+        has_more:
+          type: boolean
+    LicenseType:
+      type: string
+      enum:
+      - cc0
+      - unsplash
+      - pexels
+      - pixabay
+      - cc-by
+      - cc-by-sa
+      x-extensible-enum: true
+      description: Extensible.
+    Orientation:
+      type: string
+      enum:
+      - landscape
+      - portrait
+      - square
+      x-extensible-enum: true
+      description: 'Extensible: new orientations may be added.'
+    Photo:
+      type: object
+      required:
+      - photo_id
+      - urls
+      - source
+      - license_type
+      properties:
+        photo_id:
+          type: string
+          format: uuid
+          description: UUIDv7. Sortable by creation time, which is why it is not an integer.
+        image_url:
+          type: string
+          format: uri
+        urls:
+          $ref: '#/components/schemas/PhotoUrls'
+        width:
+          type: integer
+          minimum: 1
+        height:
+          type: integer
+          minimum: 1
+        blur_hash:
+          type:
+          - string
+          - 'null'
+          description: Placeholder while loading.
+        orientation:
+          $ref: '#/components/schemas/Orientation'
+        color_name:
+          $ref: '#/components/schemas/ColorName'
+        color_hex:
+          type: string
+        photographer_username:
+          type: string
+        photographer_full_name:
+          type:
+          - string
+          - 'null'
+        photographer_url:
+          type:
+          - string
+          - 'null'
+          format: uri
+        source:
+          $ref: '#/components/schemas/Source'
+        license_type:
+          $ref: '#/components/schemas/LicenseType'
+        source_image_url:
+          type:
+          - string
+          - 'null'
+          format: uri
+        source_description:
+          type:
+          - string
+          - 'null'
+        description:
+          type:
+          - string
+          - 'null'
+        alt_description:
+          type:
+          - string
+          - 'null'
+          description: Short text for an alt attribute. Null for a large part of the catalogue; fall back to description, then to source_description, then to nothing rather than to the filename.
+        uploaded_on:
+          type:
+          - string
+          - 'null'
+          format: date
+        relevance_score:
+          type:
+          - number
+          - 'null'
+          minimum: 0
+          maximum: 1
+          description: 'Only present on search results. Comparable within one response and not across responses: the scores are normalised per query.'
+        attribution:
+          $ref: '#/components/schemas/Attribution'
+      example:
+        photo_id: 0192f3a1-6c1e-7a3b-9f2d-4c8e1b5a7d20
+        urls:
+          regular: https://cdn.pexafy.com/p/0192f3a1/regular.jpg
+        source: unsplash
+        license_type: unsplash
+    Source:
+      type: string
+      enum:
+      - pexels
+      - unsplash
+      - pixabay
+      - wikimedia
+      x-extensible-enum: true
+      description: 'Upstream library. Extensible: this list grows as libraries are indexed, so parse it as an open string.'
+    Meta_2:
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: Unique id for this request (quote it in support tickets).
+        took_ms:
+          type: number
+          description: Server processing time in milliseconds.
+    PhotoUrls_2:
+      type: object
+      description: Ready-to-use image links in five sizes.
+      properties:
+        thumb:
+          type: string
+          format: uri
+        small:
+          type: string
+          format: uri
+        regular:
+          type: string
+          format: uri
+        large:
+          type: string
+          format: uri
+        full:
+          type: string
+          format: uri
+    Attribution_2:
+      type: object
+      description: Ready-to-display credit for the photographer/source.
+      properties:
+        html:
+          type: string
+          description: HTML attribution snippet.
+        plain:
+          type: string
+          description: Plain-text attribution.
+    PhotoListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Photo_2'
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
+        pagination:
+          anyOf:
+          - $ref: '#/components/schemas/Pagination_2'
+          - type: 'null'
+    Body_search_photos_by_image_api_v1_search_photos_post:
+      properties:
+        image:
+          type: string
+          format: binary
+          title: Image
+          description: Image file (JPEG, PNG, WebP, or AVIF)
+      type: object
+      title: Body_search_photos_by_image_api_v1_search_photos_post
+      required:
+      - image
+    Pagination_2:
+      type: object
+      properties:
+        next_cursor:
+          type:
+          - string
+          - 'null'
+          description: Pass back as `cursor` for the next page; `null` when `has_more` is false.
+        per_page:
+          type: integer
+          description: Number of items per page.
+        has_more:
+          type: boolean
+          description: Whether another page exists.
+    Photo_2:
+      type: object
+      description: A photo result. Fields returned can be narrowed with the `fields` parameter and may depend on your plan.
+      properties:
+        photo_id:
+          type: string
+          description: Unique Pexafy identifier (UUID).
+        image_url:
+          type: string
+          format: uri
+          description: Canonical source image URL.
+        urls:
+          $ref: '#/components/schemas/PhotoUrls_2'
+        width:
+          type:
+          - integer
+          - 'null'
+        height:
+          type:
+          - integer
+          - 'null'
+        blur_hash:
+          type:
+          - string
+          - 'null'
+          description: BlurHash placeholder string.
+        orientation:
+          type: string
+          enum:
+          - landscape
+          - portrait
+          - square
+        color_name:
+          type: string
+          description: Dominant color name.
+        color_hex:
+          type: string
+          description: Dominant color hex code.
+        photographer_username:
+          type: string
+        photographer_full_name:
+          type:
+          - string
+          - 'null'
+        photographer_url:
+          type:
+          - string
+          - 'null'
+          format: uri
+        source:
+          type: string
+          description: Provider (e.g. `Pexels`, `Unsplash`, `Pixabay`).
+        license_type:
+          type: string
+          description: License type (e.g. `free`).
+        source_image_url:
+          type:
+          - string
+          - 'null'
+          format: uri
+          description: URL of the photo's page on the provider.
+        source_description:
+          type:
+          - string
+          - 'null'
+        description:
+          type:
+          - string
+          - 'null'
+          description: AI-generated caption.
+        alt_description:
+          type:
+          - string
+          - 'null'
+          description: Accessibility-friendly text.
+        uploaded_on:
+          type:
+          - string
+          - 'null'
+          description: Publication date (YYYY-MM-DD).
+        relevance_score:
+          type:
+          - number
+          - 'null'
+          description: Match score 0–1 (higher is better). Only on search results.
+        attribution:
+          $ref: '#/components/schemas/Attribution_2'
+    ApiError:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code (e.g. `MISSING_PARAMS`, `PHOTO_NOT_FOUND`).
+        message:
+          type: string
+          description: Human-readable error message.
+        request_id:
+          type: string
+      required:
+      - code
+      - message
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+  securitySchemes:
+    apiKey:
+      type: http
+      scheme: bearer
+      description: Send the key as a bearer token. Keys carry scopes; a read scoped key gets a 403 on anything under /collections.
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: 'Pass your Pexafy API key in this header.
+
+
+        Get your API key at [pexafy.com/dashboard/api-keys/create](https://pexafy.com/dashboard/api-keys/create/).'
+x-refined-from:
+- pexafy-openapi-v1.3.0.json
+- pexafy-openapi.json

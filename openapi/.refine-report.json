@@ -1,0 +1,35 @@
+{
+  "provider": "pexafy",
+  "sources": [
+    "_original/pexafy-openapi-v1.3.0.json",
+    "_original/pexafy-openapi.json"
+  ],
+  "outputs": [
+    "pexafy-collections-api-openapi.yml",
+    "pexafy-facets-api-openapi.yml",
+    "pexafy-photos-api-openapi.yml",
+    "pexafy-search-api-openapi.yml",
+    "pexafy-usage-api-openapi.yml"
+  ],
+  "archived": [],
+  "errors": [],
+  "warnings": [],
+  "notes": [
+    "sourced from openapi/_original/ (2 archived document(s)); previously refined output at the top level was skipped rather than re-split",
+    "pexafy-openapi-v1.3.0.json: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "pexafy-openapi.json: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "pexafy-openapi.json: declared missing tag: Collections",
+    "pexafy-openapi.json: declared missing tag: Facets",
+    "pexafy-openapi.json: declared missing tag: Photos",
+    "pexafy-openapi.json: declared missing tag: Search",
+    "pexafy-openapi.json: declared missing tag: Usage",
+    "tag 'collections' spans 2 source specs (pexafy-openapi-v1.3.0.json, pexafy-openapi.json): per-path servers applied",
+    "tag 'facets' spans 2 source specs (pexafy-openapi-v1.3.0.json, pexafy-openapi.json): per-path servers applied",
+    "tag 'photos' spans 2 source specs (pexafy-openapi-v1.3.0.json, pexafy-openapi.json): per-path servers applied",
+    "tag 'search' spans 2 source specs (pexafy-openapi-v1.3.0.json, pexafy-openapi.json): per-path servers applied",
+    "tag 'usage' spans 2 source specs (pexafy-openapi-v1.3.0.json, pexafy-openapi.json): per-path servers applied"
+  ],
+  "skipped": [
+    "pexafy-api-openapi.json: previously refined output, superseded by openapi/_original/"
+  ]
+}
