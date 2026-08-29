@@ -7,6 +7,17 @@ description: Pexafy is a semantic (meaning-based) search engine over free-licenc
   visually similar photos, and results can be filtered by colour, orientation, licence, source, photographer or date. The
   API is self-serve — a key is issued immediately from the dashboard with no application review and no mandatory download-tracking
   callback — and the same catalogue is exposed to LLM clients through a hosted, OAuth-protected MCP server at mcp.pexafy.com.
+deliveryModel:
+  model: saas
+  open_source: false
+  commercial: true
+  callable_host: false
+  label: Hosted service · you call their endpoint
+  confidence: medium
+  source:
+  - pricing
+  generated: '2026-08-28'
+  method: derived
 image: https://pexafy.com/static/img/favicon.png
 url: https://pexafy.com/.well-known/apis.json
 created: '2026-08-27'
