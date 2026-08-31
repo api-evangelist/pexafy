@@ -226,6 +226,8 @@ aid: pexafy
 common:
 - type: MCPServer
   url: https://mcp.pexafy.com/mcp
+  description: 'Live MCP, gated: initialize returns 401 with an explicit OAuth prompt ("This MCP server needs to know who
+    you are"). Present and auth-required, not absent. Verified 2026-08-31.'
 - type: DeveloperPortal
   url: https://docs.pexafy.com
 - type: Support
