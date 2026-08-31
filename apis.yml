@@ -24,6 +24,17 @@ created: '2026-08-27'
 modified: '2026-08-27'
 specificationVersion: '0.21'
 tags:
+- Image
+- Photos
+- Stock Photos
+- Image Search
+- Semantic Search
+- Computer-Vision
+- Embeddings
+- MCP
+- agent-native
+- Content Licensing
+tags_raw:
 - images
 - photos
 - stock photos
@@ -41,6 +52,8 @@ apis:
   humanURL: https://docs.pexafy.com
   baseURL: https://api.pexafy.com
   tags:
+  - Collection
+  tags_raw:
   - collections
   properties:
   - type: OpenAPI
@@ -73,6 +86,8 @@ apis:
   humanURL: https://docs.pexafy.com
   baseURL: https://api.pexafy.com
   tags:
+  - Facets
+  tags_raw:
   - facets
   properties:
   - type: OpenAPI
@@ -105,6 +120,8 @@ apis:
   humanURL: https://docs.pexafy.com
   baseURL: https://api.pexafy.com
   tags:
+  - Photos
+  tags_raw:
   - photos
   properties:
   - type: OpenAPI
@@ -137,6 +154,8 @@ apis:
   humanURL: https://docs.pexafy.com
   baseURL: https://api.pexafy.com
   tags:
+  - Search
+  tags_raw:
   - search
   properties:
   - type: OpenAPI
@@ -169,6 +188,8 @@ apis:
   humanURL: https://docs.pexafy.com
   baseURL: https://api.pexafy.com
   tags:
+  - Usage
+  tags_raw:
   - usage
   properties:
   - type: OpenAPI
