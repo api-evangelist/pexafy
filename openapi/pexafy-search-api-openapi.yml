@@ -11,14 +11,14 @@ servers:
 - url: https://api.pexafy.com
   description: Production
 tags:
-- name: search
+- name: Search
   description: Finding photos.
 paths:
   /search/photos:
     get:
       operationId: searchPhotos
       tags:
-      - search
+      - Search
       summary: Search photos by describing them
       description: 'Ranking is semantic, not keyword based, so a full sentence outranks a pile of nouns: ''two people hiking on a ridge at dawn'' carries the relationships between the words and ''hiking dawn people'' throws them away.
 
@@ -251,7 +251,7 @@ paths:
     post:
       operationId: searchPhotosByImage
       tags:
-      - search
+      - Search
       summary: Search photos by handing over an image
       description: 'The image is embedded and matched against the same vector space as a text query, so the two are interchangeable as far as ranking is concerned. The image is not stored.
 
@@ -411,7 +411,7 @@ paths:
   /api/v1/search/photos:
     get:
       tags:
-      - search
+      - Search
       summary: Search photos by text
       description: 'Search the photo library with **natural language**, not keywords. Pexafy understands the *meaning, mood and story* of a scene, so full descriptive sentences return far better matches than a couple of tags. For example:
 
@@ -455,7 +455,7 @@ paths:
         | `relevance_score` | How closely the photo matches your query, from `0` to `1` (higher is better). |
 
 
-        Results are returned page by page — see the [Pagination](/pagination) guide to fetch the next page.'
+        Results are returned page by page — see the Pagination guide to fetch the next page.'
       operationId: search_photos_api_v1_search_photos_get
       parameters:
       - name: q
@@ -633,7 +633,7 @@ paths:
       - ApiKeyAuth: []
     post:
       tags:
-      - search
+      - Search
       summary: Search photos by image
       description: 'Upload an image and get visually similar photos in return — same subject, composition, colors or style. Ideal for finding alternatives to a photo you already have.
 
@@ -835,14 +835,6 @@ paths:
       description: Production
 components:
   schemas:
-    Meta:
-      type: object
-      properties:
-        request_id:
-          type: string
-        took_ms:
-          type: number
-          description: Server side time, excluding transfer.
     SearchEnvelope:
       type: object
       required:
@@ -860,31 +852,21 @@ components:
           $ref: '#/components/schemas/Pagination'
         meta:
           $ref: '#/components/schemas/Meta'
-    PhotoUrls:
+    Pagination:
       type: object
       required:
-      - thumb
-      - small
-      - regular
-      - large
-      - full
-      description: The same image at five widths. Pick the smallest one that fits; the CDN charges you nothing for it but the upstream library counts a view either way.
+      - per_page
+      - has_more
+      description: 'Cursor paging. There is no total count: the result set is a ranked stream and counting it would cost more than returning it.'
       properties:
-        thumb:
-          type: string
-          format: uri
-        small:
-          type: string
-          format: uri
-        regular:
-          type: string
-          format: uri
-        large:
-          type: string
-          format: uri
-        full:
-          type: string
-          format: uri
+        next_cursor:
+          type:
+          - string
+          - 'null'
+        per_page:
+          type: integer
+        has_more:
+          type: boolean
     Attribution:
       type: object
       description: Credit line, ready to drop into a page. Most upstream licences require it even when they do not require a link.
@@ -893,6 +875,34 @@ components:
           type: string
         plain:
           type: string
+    LicenseType:
+      type: string
+      enum:
+      - cc0
+      - unsplash
+      - pexels
+      - pixabay
+      - cc-by
+      - cc-by-sa
+      x-extensible-enum: true
+      description: Extensible.
+    Source:
+      type: string
+      enum:
+      - pexels
+      - unsplash
+      - pixabay
+      - wikimedia
+      x-extensible-enum: true
+      description: 'Upstream library. Extensible: this list grows as libraries are indexed, so parse it as an open string.'
+    Orientation:
+      type: string
+      enum:
+      - landscape
+      - portrait
+      - square
+      x-extensible-enum: true
+      description: 'Extensible: new orientations may be added.'
     ColorName:
       type: string
       enum:
@@ -910,80 +920,6 @@ components:
       - brown
       x-extensible-enum: true
       description: Extensible.
-    SortBy:
-      type: string
-      enum:
-      - relevance
-      - recent
-      - popular
-      default: relevance
-      x-extensible-enum: true
-      description: Extensible.
-    ErrorEnvelope:
-      type: object
-      required:
-      - success
-      - error
-      description: Every failure uses this shape, whatever the status code.
-      properties:
-        success:
-          type: boolean
-          enum:
-          - false
-        error:
-          type: object
-          required:
-          - code
-          - message
-          properties:
-            code:
-              type: string
-              description: 'Machine readable and stable across versions. Branch on this, not on the message. The set is extensible: treat an unrecognised code as a generic failure of its status class.'
-              example: validation_failed
-            message:
-              type: string
-              description: Human readable, not stable.
-            request_id:
-              type: string
-            field:
-              type:
-              - string
-              - 'null'
-              description: Which parameter was rejected, when the failure is about one.
-    Pagination:
-      type: object
-      required:
-      - per_page
-      - has_more
-      description: 'Cursor paging. There is no total count: the result set is a ranked stream and counting it would cost more than returning it.'
-      properties:
-        next_cursor:
-          type:
-          - string
-          - 'null'
-        per_page:
-          type: integer
-        has_more:
-          type: boolean
-    LicenseType:
-      type: string
-      enum:
-      - cc0
-      - unsplash
-      - pexels
-      - pixabay
-      - cc-by
-      - cc-by-sa
-      x-extensible-enum: true
-      description: Extensible.
-    Orientation:
-      type: string
-      enum:
-      - landscape
-      - portrait
-      - square
-      x-extensible-enum: true
-      description: 'Extensible: new orientations may be added.'
     Photo:
       type: object
       required:
@@ -1071,27 +1007,15 @@ components:
           regular: https://cdn.pexafy.com/p/0192f3a1/regular.jpg
         source: unsplash
         license_type: unsplash
-    Source:
-      type: string
-      enum:
-      - pexels
-      - unsplash
-      - pixabay
-      - wikimedia
-      x-extensible-enum: true
-      description: 'Upstream library. Extensible: this list grows as libraries are indexed, so parse it as an open string.'
-    Meta_2:
+    PhotoUrls:
       type: object
-      properties:
-        request_id:
-          type: string
-          description: Unique id for this request (quote it in support tickets).
-        took_ms:
-          type: number
-          description: Server processing time in milliseconds.
-    PhotoUrls_2:
-      type: object
-      description: Ready-to-use image links in five sizes.
+      required:
+      - thumb
+      - small
+      - regular
+      - large
+      - full
+      description: The same image at five widths. Pick the smallest one that fits; the CDN charges you nothing for it but the upstream library counts a view either way.
       properties:
         thumb:
           type: string
@@ -1108,46 +1032,89 @@ components:
         full:
           type: string
           format: uri
-    Attribution_2:
+    ErrorEnvelope:
       type: object
-      description: Ready-to-display credit for the photographer/source.
-      properties:
-        html:
-          type: string
-          description: HTML attribution snippet.
-        plain:
-          type: string
-          description: Plain-text attribution.
-    PhotoListResponse:
-      type: object
+      required:
+      - success
+      - error
+      description: Every failure uses this shape, whatever the status code.
       properties:
         success:
           type: boolean
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Photo_2'
-        meta:
-          $ref: '#/components/schemas/Meta_2'
+          enum:
+          - false
         error:
-          anyOf:
-          - $ref: '#/components/schemas/ApiError'
-          - type: 'null'
-        pagination:
-          anyOf:
-          - $ref: '#/components/schemas/Pagination_2'
-          - type: 'null'
-    Body_search_photos_by_image_api_v1_search_photos_post:
-      properties:
-        image:
-          type: string
-          format: binary
-          title: Image
-          description: Image file (JPEG, PNG, WebP, or AVIF)
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              description: 'Machine readable and stable across versions. Branch on this, not on the message. The set is extensible: treat an unrecognised code as a generic failure of its status class.'
+              example: validation_failed
+            message:
+              type: string
+              description: Human readable, not stable.
+            request_id:
+              type: string
+            field:
+              type:
+              - string
+              - 'null'
+              description: Which parameter was rejected, when the failure is about one.
+    Meta:
       type: object
-      title: Body_search_photos_by_image_api_v1_search_photos_post
+      properties:
+        request_id:
+          type: string
+        took_ms:
+          type: number
+          description: Server side time, excluding transfer.
+    SortBy:
+      type: string
+      enum:
+      - relevance
+      - recent
+      - popular
+      default: relevance
+      x-extensible-enum: true
+      description: Extensible.
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
       required:
-      - image
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    ApiError:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code (e.g. `MISSING_PARAMS`, `PHOTO_NOT_FOUND`).
+        message:
+          type: string
+          description: Human-readable error message.
+        request_id:
+          type: string
+      required:
+      - code
+      - message
     Pagination_2:
       type: object
       properties:
@@ -1162,6 +1129,16 @@ components:
         has_more:
           type: boolean
           description: Whether another page exists.
+    Attribution_2:
+      type: object
+      description: Ready-to-display credit for the photographer/source.
+      properties:
+        html:
+          type: string
+          description: HTML attribution snippet.
+        plain:
+          type: string
+          description: Plain-text attribution.
     Photo_2:
       type: object
       description: A photo result. Fields returned can be narrowed with the `fields` parameter and may depend on your plan.
@@ -1249,20 +1226,64 @@ components:
           description: Match score 0–1 (higher is better). Only on search results.
         attribution:
           $ref: '#/components/schemas/Attribution_2'
-    ApiError:
+    Body_search_photos_by_image_api_v1_search_photos_post:
+      properties:
+        image:
+          type: string
+          format: binary
+          title: Image
+          description: Image file (JPEG, PNG, WebP, or AVIF)
+      type: object
+      title: Body_search_photos_by_image_api_v1_search_photos_post
+      required:
+      - image
+    PhotoListResponse:
       type: object
       properties:
-        code:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Photo_2'
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
+        pagination:
+          anyOf:
+          - $ref: '#/components/schemas/Pagination_2'
+          - type: 'null'
+    PhotoUrls_2:
+      type: object
+      description: Ready-to-use image links in five sizes.
+      properties:
+        thumb:
           type: string
-          description: Machine-readable error code (e.g. `MISSING_PARAMS`, `PHOTO_NOT_FOUND`).
-        message:
+          format: uri
+        small:
           type: string
-          description: Human-readable error message.
+          format: uri
+        regular:
+          type: string
+          format: uri
+        large:
+          type: string
+          format: uri
+        full:
+          type: string
+          format: uri
+    Meta_2:
+      type: object
+      properties:
         request_id:
           type: string
-      required:
-      - code
-      - message
+          description: Unique id for this request (quote it in support tickets).
+        took_ms:
+          type: number
+          description: Server processing time in milliseconds.
     HTTPValidationError:
       properties:
         detail:
@@ -1272,27 +1293,6 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
   securitySchemes:
     apiKey:
       type: http

@@ -11,14 +11,14 @@ servers:
 - url: https://api.pexafy.com
   description: Production
 tags:
-- name: facets
+- name: Facets
   description: What the filters accept.
 paths:
   /facets/colors:
     get:
       operationId: listColors
       tags:
-      - facets
+      - Facets
       summary: Allowed colour filters
       description: The colour names color_name accepts.
       responses:
@@ -67,7 +67,7 @@ paths:
     get:
       operationId: listSources
       tags:
-      - facets
+      - Facets
       summary: Indexed libraries
       description: The libraries source accepts. This list grows.
       responses:
@@ -116,7 +116,7 @@ paths:
     get:
       operationId: listOrientations
       tags:
-      - facets
+      - Facets
       summary: Allowed orientations
       description: The values orientation accepts.
       responses:
@@ -165,7 +165,7 @@ paths:
     get:
       operationId: listLicenses
       tags:
-      - facets
+      - Facets
       summary: Allowed licence families
       description: The values license_type accepts, with what each permits.
       responses:
@@ -214,7 +214,7 @@ paths:
     get:
       operationId: suggestPhotographers
       tags:
-      - facets
+      - Facets
       summary: Autocomplete a photographer name
       parameters:
       - name: q
@@ -285,7 +285,7 @@ paths:
     get:
       operationId: getPhotographer
       tags:
-      - facets
+      - Facets
       summary: One photographer
       description: Returns a list because one username can exist in more than one upstream library, and they are different people often enough to matter.
       parameters:
@@ -347,7 +347,7 @@ paths:
   /api/v1/facets/colors:
     get:
       tags:
-      - facets
+      - Facets
       summary: List colors
       description: 'List the dominant colors you can filter photos by. Each entry has a `name` (pass it as `color_name` when searching) and its `hex` code — handy for building a color picker.
 
@@ -376,7 +376,7 @@ paths:
   /api/v1/facets/sources:
     get:
       tags:
-      - facets
+      - Facets
       summary: List sources
       description: List the photo providers available in the library (for example Unsplash, Pexels, Pixabay). Use a `name` as the `source` filter when searching. Each entry also includes a `license_url` pointing to that provider's licensing terms.
       operationId: facet_sources_api_v1_facets_sources_get
@@ -402,7 +402,7 @@ paths:
   /api/v1/facets/orientations:
     get:
       tags:
-      - facets
+      - Facets
       summary: List orientations
       description: List the available photo shapes — `landscape`, `portrait` and `square`. Use a `name` as the `orientation` filter when searching.
       operationId: facet_orientations_api_v1_facets_orientations_get
@@ -428,7 +428,7 @@ paths:
   /api/v1/facets/licenses:
     get:
       tags:
-      - facets
+      - Facets
       summary: List license types
       description: List the license types available in the library. Use a `name` as the `license_type` filter when searching to keep only photos you are allowed to use in a given way.
       operationId: facet_licenses_api_v1_facets_licenses_get
@@ -454,7 +454,7 @@ paths:
   /api/v1/facets/photographers/suggest:
     get:
       tags:
-      - facets
+      - Facets
       summary: Search photographers
       description: Autocomplete photographer names as the user types. Pass a partial name or username in `q` and get back the best-matching photographers, the most prolific first. Use a returned `username` as the `photographer` filter when searching.
       operationId: suggest_photographers_api_v1_facets_photographers_suggest_get
@@ -500,7 +500,7 @@ paths:
   /api/v1/facets/photographers/{username}:
     get:
       tags:
-      - facets
+      - Facets
       summary: Get a photographer's profiles
       description: Return every profile for a photographer across providers. The same `username` can exist on several sources (Unsplash, Pexels, Pixabay) and may even be different people, so this returns a **list** — one entry per source, each with its own `full_name`, profile `url` and per-source `photos_count`.
       operationId: get_photographer_api_v1_facets_photographers__username__get
@@ -532,14 +532,40 @@ paths:
       description: Production
 components:
   schemas:
-    Meta:
+    Photographer:
       type: object
+      required:
+      - username
       properties:
-        request_id:
+        username:
           type: string
-        took_ms:
-          type: number
-          description: Server side time, excluding transfer.
+        full_name:
+          type:
+          - string
+          - 'null'
+        source:
+          $ref: '#/components/schemas/Source'
+        url:
+          type:
+          - string
+          - 'null'
+          format: uri
+        photos_count:
+          type: integer
+          minimum: 0
+      example:
+        username: a-photographer
+        source: unsplash
+        photos_count: 412
+    Source:
+      type: string
+      enum:
+      - pexels
+      - unsplash
+      - pixabay
+      - wikimedia
+      x-extensible-enum: true
+      description: 'Upstream library. Extensible: this list grows as libraries are indexed, so parse it as an open string.'
     FacetEnvelope:
       type: object
       required:
@@ -585,31 +611,6 @@ components:
               - string
               - 'null'
               description: Which parameter was rejected, when the failure is about one.
-    Photographer:
-      type: object
-      required:
-      - username
-      properties:
-        username:
-          type: string
-        full_name:
-          type:
-          - string
-          - 'null'
-        source:
-          $ref: '#/components/schemas/Source'
-        url:
-          type:
-          - string
-          - 'null'
-          format: uri
-        photos_count:
-          type: integer
-          minimum: 0
-      example:
-        username: a-photographer
-        source: unsplash
-        photos_count: 412
     Facet:
       type: object
       required:
@@ -627,15 +628,14 @@ components:
         value: blue
         label: Blue
         count: 1840221
-    Source:
-      type: string
-      enum:
-      - pexels
-      - unsplash
-      - pixabay
-      - wikimedia
-      x-extensible-enum: true
-      description: 'Upstream library. Extensible: this list grows as libraries are indexed, so parse it as an open string.'
+    Meta:
+      type: object
+      properties:
+        request_id:
+          type: string
+        took_ms:
+          type: number
+          description: Server side time, excluding transfer.
     PhotographerEnvelope:
       type: object
       required:
@@ -656,16 +656,60 @@ components:
         - username: a-photographer
           source: unsplash
           photos_count: 412
-    Meta_2:
+    Photographer_2:
       type: object
       properties:
+        username:
+          type: string
+        full_name:
+          type:
+          - string
+          - 'null'
+        source:
+          type: string
+        url:
+          type:
+          - string
+          - 'null'
+          format: uri
+        photos_count:
+          type: integer
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    ApiError:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code (e.g. `MISSING_PARAMS`, `PHOTO_NOT_FOUND`).
+        message:
+          type: string
+          description: Human-readable error message.
         request_id:
           type: string
-          description: Unique id for this request (quote it in support tickets).
-        took_ms:
-          type: number
-          description: Server processing time in milliseconds.
-    LicensesResponse:
+      required:
+      - code
+      - message
+    PhotographersResponse:
       type: object
       properties:
         success:
@@ -673,30 +717,7 @@ components:
         data:
           type: array
           items:
-            type: object
-            properties:
-              name:
-                type: string
-        meta:
-          $ref: '#/components/schemas/Meta_2'
-        error:
-          anyOf:
-          - $ref: '#/components/schemas/ApiError'
-          - type: 'null'
-    ColorsResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        data:
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-              hex:
-                type: string
+            $ref: '#/components/schemas/Photographer_2'
         meta:
           $ref: '#/components/schemas/Meta_2'
         error:
@@ -725,39 +746,6 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ApiError'
           - type: 'null'
-    Photographer_2:
-      type: object
-      properties:
-        username:
-          type: string
-        full_name:
-          type:
-          - string
-          - 'null'
-        source:
-          type: string
-        url:
-          type:
-          - string
-          - 'null'
-          format: uri
-        photos_count:
-          type: integer
-    PhotographersResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Photographer_2'
-        meta:
-          $ref: '#/components/schemas/Meta_2'
-        error:
-          anyOf:
-          - $ref: '#/components/schemas/ApiError'
-          - type: 'null'
     PhotographerResponse:
       type: object
       properties:
@@ -773,50 +761,26 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ApiError'
           - type: 'null'
-    HTTPValidationError:
+    ColorsResponse:
+      type: object
       properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
+        success:
+          type: boolean
+        data:
           type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
-    ApiError:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Machine-readable error code (e.g. `MISSING_PARAMS`, `PHOTO_NOT_FOUND`).
-        message:
-          type: string
-          description: Human-readable error message.
-        request_id:
-          type: string
-      required:
-      - code
-      - message
-    ValidationError:
-      properties:
-        loc:
           items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
+            type: object
+            properties:
+              name:
+                type: string
+              hex:
+                type: string
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
     OrientationsResponse:
       type: object
       properties:
@@ -835,6 +799,42 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ApiError'
           - type: 'null'
+    LicensesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
+    Meta_2:
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: Unique id for this request (quote it in support tickets).
+        took_ms:
+          type: number
+          description: Server processing time in milliseconds.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
   securitySchemes:
     apiKey:
       type: http

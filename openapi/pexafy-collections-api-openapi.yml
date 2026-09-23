@@ -11,14 +11,14 @@ servers:
 - url: https://api.pexafy.com
   description: Production
 tags:
-- name: collections
+- name: Collections
   description: Saved sets, owned by an API key.
 paths:
   /collections:
     get:
       operationId: listCollections
       tags:
-      - collections
+      - Collections
       summary: Collections owned by the calling key
       responses:
         '200':
@@ -56,7 +56,7 @@ paths:
     post:
       operationId: createCollection
       tags:
-      - collections
+      - Collections
       summary: Create a collection
       requestBody:
         required: true
@@ -128,7 +128,7 @@ paths:
     get:
       operationId: getCollection
       tags:
-      - collections
+      - Collections
       summary: One collection
       parameters:
       - name: collection_id
@@ -198,7 +198,7 @@ paths:
     delete:
       operationId: deleteCollection
       tags:
-      - collections
+      - Collections
       summary: Delete a collection
       description: Deleting a collection does not delete anything else; the photos are not yours.
       parameters:
@@ -269,7 +269,7 @@ paths:
     post:
       operationId: addPhotoToCollection
       tags:
-      - collections
+      - Collections
       summary: Add a photo to a collection
       parameters:
       - name: collection_id
@@ -375,7 +375,7 @@ paths:
     delete:
       operationId: removePhotoFromCollection
       tags:
-      - collections
+      - Collections
       summary: Remove a photo from a collection
       parameters:
       - name: collection_id
@@ -451,7 +451,7 @@ paths:
   /api/v1/collections:
     get:
       tags:
-      - collections
+      - Collections
       summary: List collections
       description: 'List all the collections (saved photo albums) that belong to your account, newest first. Each entry includes its `name`, `description`, `photos_count` and `cover_photo_id`.
 
@@ -476,7 +476,7 @@ paths:
       - ApiKeyAuth: []
     post:
       tags:
-      - collections
+      - Collections
       summary: Create a collection
       description: Create a new collection (a saved album of photos). Your plan may limit how many collections you can have; if you reach the limit you'll get a `403` asking you to upgrade.
       operationId: create_collection_api_v1_collections_post
@@ -508,7 +508,7 @@ paths:
   /api/v1/collections/{collection_id}:
     get:
       tags:
-      - collections
+      - Collections
       summary: Get a collection
       description: Retrieve a single collection together with the photos it contains, the most recently added first.
       operationId: get_collection_api_v1_collections__collection_id__get
@@ -537,7 +537,7 @@ paths:
       - ApiKeyAuth: []
     delete:
       tags:
-      - collections
+      - Collections
       summary: Delete a collection
       description: Permanently delete a collection and remove every photo saved in it. This cannot be undone (the original photos in the library are not affected).
       operationId: delete_collection_api_v1_collections__collection_id__delete
@@ -570,7 +570,7 @@ paths:
   /api/v1/collections/{collection_id}/photos:
     post:
       tags:
-      - collections
+      - Collections
       summary: Add a photo to a collection
       description: Save a photo into a collection. The photo automatically becomes the collection's cover if it is the first one added. Adding the same photo twice returns a `409`.
       operationId: add_photo_to_collection_api_v1_collections__collection_id__photos_post
@@ -609,7 +609,7 @@ paths:
   /api/v1/collections/{collection_id}/photos/{photo_id}:
     delete:
       tags:
-      - collections
+      - Collections
       summary: Remove a photo from a collection
       description: Remove a photo from a collection. If it was the cover, the most recently added remaining photo becomes the new cover.
       operationId: remove_photo_from_collection_api_v1_collections__collection_id__photos__photo_id__delete
@@ -648,14 +648,6 @@ paths:
       description: Production
 components:
   schemas:
-    Meta:
-      type: object
-      properties:
-        request_id:
-          type: string
-        took_ms:
-          type: number
-          description: Server side time, excluding transfer.
     CollectionItemEnvelope:
       type: object
       required:
@@ -673,6 +665,116 @@ components:
         data:
           id: 5
           photo_id: 0192f3a1-6c1e-7a3b-9f2d-4c8e1b5a7d20
+    Collection:
+      type: object
+      required:
+      - id
+      - name
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+          maxLength: 120
+        description:
+          type:
+          - string
+          - 'null'
+          maxLength: 2000
+        is_public:
+          type: boolean
+          default: false
+        cover_photo_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        photos_count:
+          type: integer
+          minimum: 0
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      example:
+        id: 8814
+        name: office interiors
+        is_public: false
+        photos_count: 37
+    CollectionEnvelope:
+      type: object
+      required:
+      - success
+      - data
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/Collection'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      example:
+        success: true
+        data:
+          id: 8814
+          name: office interiors
+          is_public: false
+          photos_count: 37
+    CollectionListEnvelope:
+      type: object
+      required:
+      - success
+      - data
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Collection'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      example:
+        success: true
+        data:
+        - id: 8814
+          name: office interiors
+          is_public: false
+          photos_count: 37
+    CollectionItem:
+      type: object
+      required:
+      - id
+      - photo_id
+      properties:
+        id:
+          type: integer
+          format: int64
+        photo_id:
+          type: string
+          format: uuid
+        photo_thumbnail_url:
+          type:
+          - string
+          - 'null'
+          format: uri
+        photo_source:
+          type:
+          - string
+          - 'null'
+        photo_photographer:
+          type:
+          - string
+          - 'null'
+        added_at:
+          type: string
+          format: date-time
+      example:
+        id: 5
+        photo_id: 0192f3a1-6c1e-7a3b-9f2d-4c8e1b5a7d20
     ErrorEnvelope:
       type: object
       required:
@@ -725,145 +827,28 @@ components:
       example:
         name: office interiors
         is_public: false
-    CollectionEnvelope:
-      type: object
-      required:
-      - success
-      - data
-      properties:
-        success:
-          type: boolean
-        data:
-          $ref: '#/components/schemas/Collection'
-        meta:
-          $ref: '#/components/schemas/Meta'
-      example:
-        success: true
-        data:
-          id: 8814
-          name: office interiors
-          is_public: false
-          photos_count: 37
-    CollectionItem:
-      type: object
-      required:
-      - id
-      - photo_id
-      properties:
-        id:
-          type: integer
-          format: int64
-        photo_id:
-          type: string
-          format: uuid
-        photo_thumbnail_url:
-          type:
-          - string
-          - 'null'
-          format: uri
-        photo_source:
-          type:
-          - string
-          - 'null'
-        photo_photographer:
-          type:
-          - string
-          - 'null'
-        added_at:
-          type: string
-          format: date-time
-      example:
-        id: 5
-        photo_id: 0192f3a1-6c1e-7a3b-9f2d-4c8e1b5a7d20
-    CollectionListEnvelope:
-      type: object
-      required:
-      - success
-      - data
-      properties:
-        success:
-          type: boolean
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Collection'
-        meta:
-          $ref: '#/components/schemas/Meta'
-      example:
-        success: true
-        data:
-        - id: 8814
-          name: office interiors
-          is_public: false
-          photos_count: 37
-    Collection:
-      type: object
-      required:
-      - id
-      - name
-      properties:
-        id:
-          type: integer
-          format: int64
-        name:
-          type: string
-          maxLength: 120
-        description:
-          type:
-          - string
-          - 'null'
-          maxLength: 2000
-        is_public:
-          type: boolean
-          default: false
-        cover_photo_id:
-          type:
-          - string
-          - 'null'
-          format: uuid
-        photos_count:
-          type: integer
-          minimum: 0
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-      example:
-        id: 8814
-        name: office interiors
-        is_public: false
-        photos_count: 37
-    Meta_2:
+    Meta:
       type: object
       properties:
         request_id:
           type: string
-          description: Unique id for this request (quote it in support tickets).
         took_ms:
           type: number
-          description: Server processing time in milliseconds.
-    CollectionResponse:
+          description: Server side time, excluding transfer.
+    ApiError:
       type: object
       properties:
-        success:
-          type: boolean
-        data:
-          allOf:
-          - $ref: '#/components/schemas/Collection_2'
-          - type: object
-            properties:
-              photos:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CollectionItem_2'
-        meta:
-          $ref: '#/components/schemas/Meta_2'
-        error:
-          anyOf:
-          - $ref: '#/components/schemas/ApiError'
-          - type: 'null'
+        code:
+          type: string
+          description: Machine-readable error code (e.g. `MISSING_PARAMS`, `PHOTO_NOT_FOUND`).
+        message:
+          type: string
+          description: Human-readable error message.
+        request_id:
+          type: string
+      required:
+      - code
+      - message
     ValidationError:
       properties:
         loc:
@@ -885,114 +870,6 @@ components:
       - msg
       - type
       title: ValidationError
-    CollectionItemResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        data:
-          $ref: '#/components/schemas/CollectionItem_2'
-        meta:
-          $ref: '#/components/schemas/Meta_2'
-        error:
-          anyOf:
-          - $ref: '#/components/schemas/ApiError'
-          - type: 'null'
-    CollectionCreateBody:
-      properties:
-        name:
-          type: string
-          maxLength: 255
-          minLength: 1
-          title: Name
-        description:
-          anyOf:
-          - type: string
-            maxLength: 1000
-          - type: 'null'
-          title: Description
-        is_public:
-          type: boolean
-          title: Is Public
-          default: false
-      type: object
-      required:
-      - name
-      title: CollectionCreateBody
-    ApiError:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Machine-readable error code (e.g. `MISSING_PARAMS`, `PHOTO_NOT_FOUND`).
-        message:
-          type: string
-          description: Human-readable error message.
-        request_id:
-          type: string
-      required:
-      - code
-      - message
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
-    AddPhotoBody:
-      properties:
-        photo_id:
-          type: string
-          maxLength: 255
-          minLength: 1
-          title: Photo Id
-        photo_thumbnail_url:
-          anyOf:
-          - type: string
-            maxLength: 2048
-          - type: 'null'
-          title: Photo Thumbnail Url
-        photo_source:
-          anyOf:
-          - type: string
-            maxLength: 100
-          - type: 'null'
-          title: Photo Source
-        photo_photographer:
-          anyOf:
-          - type: string
-            maxLength: 255
-          - type: 'null'
-          title: Photo Photographer
-      type: object
-      required:
-      - photo_id
-      title: AddPhotoBody
-    CollectionItem_2:
-      type: object
-      properties:
-        id:
-          type: integer
-        photo_id:
-          type: string
-        photo_thumbnail_url:
-          type:
-          - string
-          - 'null'
-        photo_source:
-          type:
-          - string
-          - 'null'
-        photo_photographer:
-          type:
-          - string
-          - 'null'
-        added_at:
-          type: string
-          format: date-time
     CollectionListResponse:
       type: object
       properties:
@@ -1024,6 +901,27 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ApiError'
           - type: 'null'
+    CollectionCreateBody:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Name
+        description:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Description
+        is_public:
+          type: boolean
+          title: Is Public
+          default: false
+      type: object
+      required:
+      - name
+      title: CollectionCreateBody
     Collection_2:
       type: object
       properties:
@@ -1047,6 +945,108 @@ components:
           format: date-time
         photos_count:
           type: integer
+    AddPhotoBody:
+      properties:
+        photo_id:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Photo Id
+        photo_thumbnail_url:
+          anyOf:
+          - type: string
+            maxLength: 2048
+          - type: 'null'
+          title: Photo Thumbnail Url
+        photo_source:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Photo Source
+        photo_photographer:
+          anyOf:
+          - type: string
+            maxLength: 255
+          - type: 'null'
+          title: Photo Photographer
+      type: object
+      required:
+      - photo_id
+      title: AddPhotoBody
+    CollectionItemResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/CollectionItem_2'
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
+    CollectionItem_2:
+      type: object
+      properties:
+        id:
+          type: integer
+        photo_id:
+          type: string
+        photo_thumbnail_url:
+          type:
+          - string
+          - 'null'
+        photo_source:
+          type:
+          - string
+          - 'null'
+        photo_photographer:
+          type:
+          - string
+          - 'null'
+        added_at:
+          type: string
+          format: date-time
+    Meta_2:
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: Unique id for this request (quote it in support tickets).
+        took_ms:
+          type: number
+          description: Server processing time in milliseconds.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    CollectionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          allOf:
+          - $ref: '#/components/schemas/Collection_2'
+          - type: object
+            properties:
+              photos:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CollectionItem_2'
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
   securitySchemes:
     apiKey:
       type: http

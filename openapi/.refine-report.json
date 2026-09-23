@@ -27,9 +27,14 @@
     "tag 'facets' spans 2 source specs (pexafy-openapi-v1.3.0.json, pexafy-openapi.json): per-path servers applied",
     "tag 'photos' spans 2 source specs (pexafy-openapi-v1.3.0.json, pexafy-openapi.json): per-path servers applied",
     "tag 'search' spans 2 source specs (pexafy-openapi-v1.3.0.json, pexafy-openapi.json): per-path servers applied",
-    "tag 'usage' spans 2 source specs (pexafy-openapi-v1.3.0.json, pexafy-openapi.json): per-path servers applied"
+    "tag 'usage' spans 2 source specs (pexafy-openapi-v1.3.0.json, pexafy-openapi.json): per-path servers applied",
+    "apis.yml register: already-registered"
   ],
   "skipped": [
-    "pexafy-api-openapi.json: previously refined output, superseded by openapi/_original/"
+    "pexafy-collections-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "pexafy-facets-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "pexafy-photos-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "pexafy-search-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "pexafy-usage-api-openapi.yml: previously refined output, superseded by openapi/_original/"
   ]
 }
