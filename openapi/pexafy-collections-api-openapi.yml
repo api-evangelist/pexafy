@@ -665,6 +665,64 @@ components:
         data:
           id: 5
           photo_id: 0192f3a1-6c1e-7a3b-9f2d-4c8e1b5a7d20
+    ErrorEnvelope:
+      type: object
+      required:
+      - success
+      - error
+      description: Every failure uses this shape, whatever the status code.
+      properties:
+        success:
+          type: boolean
+          enum:
+          - false
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              description: 'Machine readable and stable across versions. Branch on this, not on the message. The set is extensible: treat an unrecognised code as a generic failure of its status class.'
+              example: validation_failed
+            message:
+              type: string
+              description: Human readable, not stable.
+            request_id:
+              type: string
+            field:
+              type:
+              - string
+              - 'null'
+              description: Which parameter was rejected, when the failure is about one.
+    Meta:
+      type: object
+      properties:
+        request_id:
+          type: string
+        took_ms:
+          type: number
+          description: Server side time, excluding transfer.
+    CollectionEnvelope:
+      type: object
+      required:
+      - success
+      - data
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/Collection'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      example:
+        success: true
+        data:
+          id: 8814
+          name: office interiors
+          is_public: false
+          photos_count: 37
     Collection:
       type: object
       required:
@@ -704,25 +762,6 @@ components:
         name: office interiors
         is_public: false
         photos_count: 37
-    CollectionEnvelope:
-      type: object
-      required:
-      - success
-      - data
-      properties:
-        success:
-          type: boolean
-        data:
-          $ref: '#/components/schemas/Collection'
-        meta:
-          $ref: '#/components/schemas/Meta'
-      example:
-        success: true
-        data:
-          id: 8814
-          name: office interiors
-          is_public: false
-          photos_count: 37
     CollectionListEnvelope:
       type: object
       required:
@@ -775,37 +814,6 @@ components:
       example:
         id: 5
         photo_id: 0192f3a1-6c1e-7a3b-9f2d-4c8e1b5a7d20
-    ErrorEnvelope:
-      type: object
-      required:
-      - success
-      - error
-      description: Every failure uses this shape, whatever the status code.
-      properties:
-        success:
-          type: boolean
-          enum:
-          - false
-        error:
-          type: object
-          required:
-          - code
-          - message
-          properties:
-            code:
-              type: string
-              description: 'Machine readable and stable across versions. Branch on this, not on the message. The set is extensible: treat an unrecognised code as a generic failure of its status class.'
-              example: validation_failed
-            message:
-              type: string
-              description: Human readable, not stable.
-            request_id:
-              type: string
-            field:
-              type:
-              - string
-              - 'null'
-              description: Which parameter was rejected, when the failure is about one.
     CollectionInput:
       type: object
       required:
@@ -827,28 +835,6 @@ components:
       example:
         name: office interiors
         is_public: false
-    Meta:
-      type: object
-      properties:
-        request_id:
-          type: string
-        took_ms:
-          type: number
-          description: Server side time, excluding transfer.
-    ApiError:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Machine-readable error code (e.g. `MISSING_PARAMS`, `PHOTO_NOT_FOUND`).
-        message:
-          type: string
-          description: Human-readable error message.
-        request_id:
-          type: string
-      required:
-      - code
-      - message
     ValidationError:
       properties:
         loc:
@@ -870,6 +856,19 @@ components:
       - msg
       - type
       title: ValidationError
+    CollectionItemResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/CollectionItem_2'
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
     CollectionListResponse:
       type: object
       properties:
@@ -901,50 +900,6 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ApiError'
           - type: 'null'
-    CollectionCreateBody:
-      properties:
-        name:
-          type: string
-          maxLength: 255
-          minLength: 1
-          title: Name
-        description:
-          anyOf:
-          - type: string
-            maxLength: 1000
-          - type: 'null'
-          title: Description
-        is_public:
-          type: boolean
-          title: Is Public
-          default: false
-      type: object
-      required:
-      - name
-      title: CollectionCreateBody
-    Collection_2:
-      type: object
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-        description:
-          type:
-          - string
-          - 'null'
-        is_public:
-          type: boolean
-        cover_photo_id:
-          type: string
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-        photos_count:
-          type: integer
     AddPhotoBody:
       properties:
         photo_id:
@@ -974,13 +929,82 @@ components:
       required:
       - photo_id
       title: AddPhotoBody
-    CollectionItemResponse:
+    Meta_2:
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: Unique id for this request (quote it in support tickets).
+        took_ms:
+          type: number
+          description: Server processing time in milliseconds.
+    CollectionCreateBody:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Name
+        description:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Description
+        is_public:
+          type: boolean
+          title: Is Public
+          default: false
+      type: object
+      required:
+      - name
+      title: CollectionCreateBody
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Collection_2:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type:
+          - string
+          - 'null'
+        is_public:
+          type: boolean
+        cover_photo_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        photos_count:
+          type: integer
+    CollectionResponse:
       type: object
       properties:
         success:
           type: boolean
         data:
-          $ref: '#/components/schemas/CollectionItem_2'
+          allOf:
+          - $ref: '#/components/schemas/Collection_2'
+          - type: object
+            properties:
+              photos:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CollectionItem_2'
         meta:
           $ref: '#/components/schemas/Meta_2'
         error:
@@ -1009,44 +1033,20 @@ components:
         added_at:
           type: string
           format: date-time
-    Meta_2:
+    ApiError:
       type: object
       properties:
+        code:
+          type: string
+          description: Machine-readable error code (e.g. `MISSING_PARAMS`, `PHOTO_NOT_FOUND`).
+        message:
+          type: string
+          description: Human-readable error message.
         request_id:
           type: string
-          description: Unique id for this request (quote it in support tickets).
-        took_ms:
-          type: number
-          description: Server processing time in milliseconds.
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
-    CollectionResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        data:
-          allOf:
-          - $ref: '#/components/schemas/Collection_2'
-          - type: object
-            properties:
-              photos:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CollectionItem_2'
-        meta:
-          $ref: '#/components/schemas/Meta_2'
-        error:
-          anyOf:
-          - $ref: '#/components/schemas/ApiError'
-          - type: 'null'
+      required:
+      - code
+      - message
   securitySchemes:
     apiKey:
       type: http

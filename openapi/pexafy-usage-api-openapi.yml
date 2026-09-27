@@ -221,6 +221,32 @@ components:
         plan: starter
         searches: 4120
         searches_limit: 10000
+    Meta:
+      type: object
+      properties:
+        request_id:
+          type: string
+        took_ms:
+          type: number
+          description: Server side time, excluding transfer.
+    UsageEnvelope:
+      type: object
+      required:
+      - success
+      - data
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/Usage'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      example:
+        success: true
+        data:
+          plan: starter
+          searches: 4120
+          searches_limit: 10000
     ErrorEnvelope:
       type: object
       required:
@@ -252,93 +278,6 @@ components:
               - string
               - 'null'
               description: Which parameter was rejected, when the failure is about one.
-    Meta:
-      type: object
-      properties:
-        request_id:
-          type: string
-        took_ms:
-          type: number
-          description: Server side time, excluding transfer.
-    UsageEnvelope:
-      type: object
-      required:
-      - success
-      - data
-      properties:
-        success:
-          type: boolean
-        data:
-          $ref: '#/components/schemas/Usage'
-        meta:
-          $ref: '#/components/schemas/Meta'
-      example:
-        success: true
-        data:
-          plan: starter
-          searches: 4120
-          searches_limit: 10000
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
-    ApiError:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Machine-readable error code (e.g. `MISSING_PARAMS`, `PHOTO_NOT_FOUND`).
-        message:
-          type: string
-          description: Human-readable error message.
-        request_id:
-          type: string
-      required:
-      - code
-      - message
-    UsageResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        data:
-          type: object
-          properties:
-            period:
-              type: string
-              description: YYYY-MM
-            requests:
-              type: object
-              properties:
-                used:
-                  type: integer
-                limit:
-                  type: integer
-                remaining:
-                  type: integer
-        meta:
-          $ref: '#/components/schemas/Meta_2'
-        error:
-          anyOf:
-          - $ref: '#/components/schemas/ApiError'
-          - type: 'null'
     DailyUsageResponse:
       type: object
       properties:
@@ -401,15 +340,27 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ApiError'
           - type: 'null'
-    Meta_2:
-      type: object
+    ValidationError:
       properties:
-        request_id:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
           type: string
-          description: Unique id for this request (quote it in support tickets).
-        took_ms:
-          type: number
-          description: Server processing time in milliseconds.
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
     HTTPValidationError:
       properties:
         detail:
@@ -419,6 +370,41 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
+    Meta_2:
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: Unique id for this request (quote it in support tickets).
+        took_ms:
+          type: number
+          description: Server processing time in milliseconds.
+    UsageResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            period:
+              type: string
+              description: YYYY-MM
+            requests:
+              type: object
+              properties:
+                used:
+                  type: integer
+                limit:
+                  type: integer
+                remaining:
+                  type: integer
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
     MonthlyUsageResponse:
       type: object
       properties:
@@ -445,6 +431,20 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ApiError'
           - type: 'null'
+    ApiError:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code (e.g. `MISSING_PARAMS`, `PHOTO_NOT_FOUND`).
+        message:
+          type: string
+          description: Human-readable error message.
+        request_id:
+          type: string
+      required:
+      - code
+      - message
   securitySchemes:
     apiKey:
       type: http

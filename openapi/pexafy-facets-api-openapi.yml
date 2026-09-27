@@ -532,31 +532,6 @@ paths:
       description: Production
 components:
   schemas:
-    Photographer:
-      type: object
-      required:
-      - username
-      properties:
-        username:
-          type: string
-        full_name:
-          type:
-          - string
-          - 'null'
-        source:
-          $ref: '#/components/schemas/Source'
-        url:
-          type:
-          - string
-          - 'null'
-          format: uri
-        photos_count:
-          type: integer
-          minimum: 0
-      example:
-        username: a-photographer
-        source: unsplash
-        photos_count: 412
     Source:
       type: string
       enum:
@@ -566,20 +541,6 @@ components:
       - wikimedia
       x-extensible-enum: true
       description: 'Upstream library. Extensible: this list grows as libraries are indexed, so parse it as an open string.'
-    FacetEnvelope:
-      type: object
-      required:
-      - success
-      - data
-      properties:
-        success:
-          type: boolean
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Facet'
-        meta:
-          $ref: '#/components/schemas/Meta'
     ErrorEnvelope:
       type: object
       required:
@@ -611,6 +572,20 @@ components:
               - string
               - 'null'
               description: Which parameter was rejected, when the failure is about one.
+    FacetEnvelope:
+      type: object
+      required:
+      - success
+      - data
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Facet'
+        meta:
+          $ref: '#/components/schemas/Meta'
     Facet:
       type: object
       required:
@@ -636,6 +611,31 @@ components:
         took_ms:
           type: number
           description: Server side time, excluding transfer.
+    Photographer:
+      type: object
+      required:
+      - username
+      properties:
+        username:
+          type: string
+        full_name:
+          type:
+          - string
+          - 'null'
+        source:
+          $ref: '#/components/schemas/Source'
+        url:
+          type:
+          - string
+          - 'null'
+          format: uri
+        photos_count:
+          type: integer
+          minimum: 0
+      example:
+        username: a-photographer
+        source: unsplash
+        photos_count: 412
     PhotographerEnvelope:
       type: object
       required:
@@ -656,60 +656,7 @@ components:
         - username: a-photographer
           source: unsplash
           photos_count: 412
-    Photographer_2:
-      type: object
-      properties:
-        username:
-          type: string
-        full_name:
-          type:
-          - string
-          - 'null'
-        source:
-          type: string
-        url:
-          type:
-          - string
-          - 'null'
-          format: uri
-        photos_count:
-          type: integer
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
-    ApiError:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Machine-readable error code (e.g. `MISSING_PARAMS`, `PHOTO_NOT_FOUND`).
-        message:
-          type: string
-          description: Human-readable error message.
-        request_id:
-          type: string
-      required:
-      - code
-      - message
-    PhotographersResponse:
+    ColorsResponse:
       type: object
       properties:
         success:
@@ -717,7 +664,12 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Photographer_2'
+            type: object
+            properties:
+              name:
+                type: string
+              hex:
+                type: string
         meta:
           $ref: '#/components/schemas/Meta_2'
         error:
@@ -746,7 +698,7 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ApiError'
           - type: 'null'
-    PhotographerResponse:
+    PhotographersResponse:
       type: object
       properties:
         success:
@@ -761,7 +713,28 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ApiError'
           - type: 'null'
-    ColorsResponse:
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    LicensesResponse:
       type: object
       properties:
         success:
@@ -772,8 +745,6 @@ components:
             type: object
             properties:
               name:
-                type: string
-              hex:
                 type: string
         meta:
           $ref: '#/components/schemas/Meta_2'
@@ -799,24 +770,24 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ApiError'
           - type: 'null'
-    LicensesResponse:
+    Photographer_2:
       type: object
       properties:
-        success:
-          type: boolean
-        data:
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-        meta:
-          $ref: '#/components/schemas/Meta_2'
-        error:
-          anyOf:
-          - $ref: '#/components/schemas/ApiError'
-          - type: 'null'
+        username:
+          type: string
+        full_name:
+          type:
+          - string
+          - 'null'
+        source:
+          type: string
+        url:
+          type:
+          - string
+          - 'null'
+          format: uri
+        photos_count:
+          type: integer
     Meta_2:
       type: object
       properties:
@@ -835,6 +806,35 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
+    PhotographerResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Photographer_2'
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
+    ApiError:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code (e.g. `MISSING_PARAMS`, `PHOTO_NOT_FOUND`).
+        message:
+          type: string
+          description: Human-readable error message.
+        request_id:
+          type: string
+      required:
+      - code
+      - message
   securitySchemes:
     apiKey:
       type: http

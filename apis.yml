@@ -45,10 +45,10 @@ tags:
 - Stock Photos
 - Image Search
 - Semantic Search
-- Computer-Vision
+- Computer Vision
 - Embeddings
 - MCP
-- agent-native
+- Agent-Native
 - Content Licensing
 tags_raw:
 - images
@@ -61,6 +61,7 @@ tags_raw:
 - mcp
 - agent-native
 - content licensing
+- Computer-Vision
 apis:
 - aid: pexafy:pexafy-collections-api
   name: Pexafy Collections API
