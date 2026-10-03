@@ -835,124 +835,6 @@ paths:
       description: Production
 components:
   schemas:
-    SearchEnvelope:
-      type: object
-      required:
-      - success
-      - data
-      - pagination
-      properties:
-        success:
-          type: boolean
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Photo'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-        meta:
-          $ref: '#/components/schemas/Meta'
-    Source:
-      type: string
-      enum:
-      - pexels
-      - unsplash
-      - pixabay
-      - wikimedia
-      x-extensible-enum: true
-      description: 'Upstream library. Extensible: this list grows as libraries are indexed, so parse it as an open string.'
-    ColorName:
-      type: string
-      enum:
-      - black
-      - white
-      - grey
-      - red
-      - orange
-      - yellow
-      - green
-      - teal
-      - blue
-      - purple
-      - pink
-      - brown
-      x-extensible-enum: true
-      description: Extensible.
-    ErrorEnvelope:
-      type: object
-      required:
-      - success
-      - error
-      description: Every failure uses this shape, whatever the status code.
-      properties:
-        success:
-          type: boolean
-          enum:
-          - false
-        error:
-          type: object
-          required:
-          - code
-          - message
-          properties:
-            code:
-              type: string
-              description: 'Machine readable and stable across versions. Branch on this, not on the message. The set is extensible: treat an unrecognised code as a generic failure of its status class.'
-              example: validation_failed
-            message:
-              type: string
-              description: Human readable, not stable.
-            request_id:
-              type: string
-            field:
-              type:
-              - string
-              - 'null'
-              description: Which parameter was rejected, when the failure is about one.
-    LicenseType:
-      type: string
-      enum:
-      - cc0
-      - unsplash
-      - pexels
-      - pixabay
-      - cc-by
-      - cc-by-sa
-      x-extensible-enum: true
-      description: Extensible.
-    Attribution:
-      type: object
-      description: Credit line, ready to drop into a page. Most upstream licences require it even when they do not require a link.
-      properties:
-        html:
-          type: string
-        plain:
-          type: string
-    PhotoUrls:
-      type: object
-      required:
-      - thumb
-      - small
-      - regular
-      - large
-      - full
-      description: The same image at five widths. Pick the smallest one that fits; the CDN charges you nothing for it but the upstream library counts a view either way.
-      properties:
-        thumb:
-          type: string
-          format: uri
-        small:
-          type: string
-          format: uri
-        regular:
-          type: string
-          format: uri
-        large:
-          type: string
-          format: uri
-        full:
-          type: string
-          format: uri
     Photo:
       type: object
       required:
@@ -1040,31 +922,14 @@ components:
           regular: https://cdn.pexafy.com/p/0192f3a1/regular.jpg
         source: unsplash
         license_type: unsplash
-    Meta:
+    Attribution:
       type: object
+      description: Credit line, ready to drop into a page. Most upstream licences require it even when they do not require a link.
       properties:
-        request_id:
+        html:
           type: string
-        took_ms:
-          type: number
-          description: Server side time, excluding transfer.
-    Orientation:
-      type: string
-      enum:
-      - landscape
-      - portrait
-      - square
-      x-extensible-enum: true
-      description: 'Extensible: new orientations may be added.'
-    SortBy:
-      type: string
-      enum:
-      - relevance
-      - recent
-      - popular
-      default: relevance
-      x-extensible-enum: true
-      description: Extensible.
+        plain:
+          type: string
     Pagination:
       type: object
       required:
@@ -1080,6 +945,141 @@ components:
           type: integer
         has_more:
           type: boolean
+    ErrorEnvelope:
+      type: object
+      required:
+      - success
+      - error
+      description: Every failure uses this shape, whatever the status code.
+      properties:
+        success:
+          type: boolean
+          enum:
+          - false
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              description: 'Machine readable and stable across versions. Branch on this, not on the message. The set is extensible: treat an unrecognised code as a generic failure of its status class.'
+              example: validation_failed
+            message:
+              type: string
+              description: Human readable, not stable.
+            request_id:
+              type: string
+            field:
+              type:
+              - string
+              - 'null'
+              description: Which parameter was rejected, when the failure is about one.
+    PhotoUrls:
+      type: object
+      required:
+      - thumb
+      - small
+      - regular
+      - large
+      - full
+      description: The same image at five widths. Pick the smallest one that fits; the CDN charges you nothing for it but the upstream library counts a view either way.
+      properties:
+        thumb:
+          type: string
+          format: uri
+        small:
+          type: string
+          format: uri
+        regular:
+          type: string
+          format: uri
+        large:
+          type: string
+          format: uri
+        full:
+          type: string
+          format: uri
+    Meta:
+      type: object
+      properties:
+        request_id:
+          type: string
+        took_ms:
+          type: number
+          description: Server side time, excluding transfer.
+    ColorName:
+      type: string
+      enum:
+      - black
+      - white
+      - grey
+      - red
+      - orange
+      - yellow
+      - green
+      - teal
+      - blue
+      - purple
+      - pink
+      - brown
+      x-extensible-enum: true
+      description: Extensible.
+    Orientation:
+      type: string
+      enum:
+      - landscape
+      - portrait
+      - square
+      x-extensible-enum: true
+      description: 'Extensible: new orientations may be added.'
+    SearchEnvelope:
+      type: object
+      required:
+      - success
+      - data
+      - pagination
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Photo'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    Source:
+      type: string
+      enum:
+      - pexels
+      - unsplash
+      - pixabay
+      - wikimedia
+      x-extensible-enum: true
+      description: 'Upstream library. Extensible: this list grows as libraries are indexed, so parse it as an open string.'
+    SortBy:
+      type: string
+      enum:
+      - relevance
+      - recent
+      - popular
+      default: relevance
+      x-extensible-enum: true
+      description: Extensible.
+    LicenseType:
+      type: string
+      enum:
+      - cc0
+      - unsplash
+      - pexels
+      - pixabay
+      - cc-by
+      - cc-by-sa
+      x-extensible-enum: true
+      description: Extensible.
     PhotoListResponse:
       type: object
       properties:
@@ -1099,6 +1099,60 @@ components:
           anyOf:
           - $ref: '#/components/schemas/Pagination_2'
           - type: 'null'
+    Body_search_photos_by_image_api_v1_search_photos_post:
+      properties:
+        image:
+          type: string
+          format: binary
+          title: Image
+          description: Image file (JPEG, PNG, WebP, or AVIF)
+      type: object
+      title: Body_search_photos_by_image_api_v1_search_photos_post
+      required:
+      - image
+    Attribution_2:
+      type: object
+      description: Ready-to-display credit for the photographer/source.
+      properties:
+        html:
+          type: string
+          description: HTML attribution snippet.
+        plain:
+          type: string
+          description: Plain-text attribution.
+    Pagination_2:
+      type: object
+      properties:
+        next_cursor:
+          type:
+          - string
+          - 'null'
+          description: Pass back as `cursor` for the next page; `null` when `has_more` is false.
+        per_page:
+          type: integer
+          description: Number of items per page.
+        has_more:
+          type: boolean
+          description: Whether another page exists.
+    PhotoUrls_2:
+      type: object
+      description: Ready-to-use image links in five sizes.
+      properties:
+        thumb:
+          type: string
+          format: uri
+        small:
+          type: string
+          format: uri
+        regular:
+          type: string
+          format: uri
+        large:
+          type: string
+          format: uri
+        full:
+          type: string
+          format: uri
     ValidationError:
       properties:
         loc:
@@ -1120,35 +1174,24 @@ components:
       - msg
       - type
       title: ValidationError
-    Attribution_2:
+    Meta_2:
       type: object
-      description: Ready-to-display credit for the photographer/source.
       properties:
-        html:
+        request_id:
           type: string
-          description: HTML attribution snippet.
-        plain:
-          type: string
-          description: Plain-text attribution.
-    PhotoUrls_2:
+          description: Unique id for this request (quote it in support tickets).
+        took_ms:
+          type: number
+          description: Server processing time in milliseconds.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
       type: object
-      description: Ready-to-use image links in five sizes.
-      properties:
-        thumb:
-          type: string
-          format: uri
-        small:
-          type: string
-          format: uri
-        regular:
-          type: string
-          format: uri
-        large:
-          type: string
-          format: uri
-        full:
-          type: string
-          format: uri
+      title: HTTPValidationError
     Photo_2:
       type: object
       description: A photo result. Fields returned can be narrowed with the `fields` parameter and may depend on your plan.
@@ -1236,49 +1279,6 @@ components:
           description: Match score 0–1 (higher is better). Only on search results.
         attribution:
           $ref: '#/components/schemas/Attribution_2'
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
-    Meta_2:
-      type: object
-      properties:
-        request_id:
-          type: string
-          description: Unique id for this request (quote it in support tickets).
-        took_ms:
-          type: number
-          description: Server processing time in milliseconds.
-    Body_search_photos_by_image_api_v1_search_photos_post:
-      properties:
-        image:
-          type: string
-          format: binary
-          title: Image
-          description: Image file (JPEG, PNG, WebP, or AVIF)
-      type: object
-      title: Body_search_photos_by_image_api_v1_search_photos_post
-      required:
-      - image
-    Pagination_2:
-      type: object
-      properties:
-        next_cursor:
-          type:
-          - string
-          - 'null'
-          description: Pass back as `cursor` for the next page; `null` when `has_more` is false.
-        per_page:
-          type: integer
-          description: Number of items per page.
-        has_more:
-          type: boolean
-          description: Whether another page exists.
     ApiError:
       type: object
       properties:

@@ -532,15 +532,26 @@ paths:
       description: Production
 components:
   schemas:
-    Source:
-      type: string
-      enum:
-      - pexels
-      - unsplash
-      - pixabay
-      - wikimedia
-      x-extensible-enum: true
-      description: 'Upstream library. Extensible: this list grows as libraries are indexed, so parse it as an open string.'
+    PhotographerEnvelope:
+      type: object
+      required:
+      - success
+      - data
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Photographer'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      example:
+        success: true
+        data:
+        - username: a-photographer
+          source: unsplash
+          photos_count: 412
     ErrorEnvelope:
       type: object
       required:
@@ -572,6 +583,14 @@ components:
               - string
               - 'null'
               description: Which parameter was rejected, when the failure is about one.
+    Meta:
+      type: object
+      properties:
+        request_id:
+          type: string
+        took_ms:
+          type: number
+          description: Server side time, excluding transfer.
     FacetEnvelope:
       type: object
       required:
@@ -586,31 +605,6 @@ components:
             $ref: '#/components/schemas/Facet'
         meta:
           $ref: '#/components/schemas/Meta'
-    Facet:
-      type: object
-      required:
-      - value
-      description: One allowed value of a filter, with how much of the catalogue it covers. Read these rather than hard coding the lists.
-      properties:
-        value:
-          type: string
-        label:
-          type: string
-        count:
-          type: integer
-          minimum: 0
-      example:
-        value: blue
-        label: Blue
-        count: 1840221
-    Meta:
-      type: object
-      properties:
-        request_id:
-          type: string
-        took_ms:
-          type: number
-          description: Server side time, excluding transfer.
     Photographer:
       type: object
       required:
@@ -636,26 +630,155 @@ components:
         username: a-photographer
         source: unsplash
         photos_count: 412
-    PhotographerEnvelope:
+    Facet:
       type: object
       required:
-      - success
-      - data
+      - value
+      description: One allowed value of a filter, with how much of the catalogue it covers. Read these rather than hard coding the lists.
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+        count:
+          type: integer
+          minimum: 0
+      example:
+        value: blue
+        label: Blue
+        count: 1840221
+    Source:
+      type: string
+      enum:
+      - pexels
+      - unsplash
+      - pixabay
+      - wikimedia
+      x-extensible-enum: true
+      description: 'Upstream library. Extensible: this list grows as libraries are indexed, so parse it as an open string.'
+    OrientationsResponse:
+      type: object
       properties:
         success:
           type: boolean
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Photographer'
+            type: object
+            properties:
+              name:
+                type: string
         meta:
-          $ref: '#/components/schemas/Meta'
-      example:
-        success: true
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
+    LicensesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
         data:
-        - username: a-photographer
-          source: unsplash
-          photos_count: 412
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
+    PhotographerResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Photographer_2'
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
+    Meta_2:
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: Unique id for this request (quote it in support tickets).
+        took_ms:
+          type: number
+          description: Server processing time in milliseconds.
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    PhotographersResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Photographer_2'
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
+    Photographer_2:
+      type: object
+      properties:
+        username:
+          type: string
+        full_name:
+          type:
+          - string
+          - 'null'
+        source:
+          type: string
+        url:
+          type:
+          - string
+          - 'null'
+          format: uri
+        photos_count:
+          type: integer
     ColorsResponse:
       type: object
       properties:
@@ -692,129 +815,6 @@ components:
                 type:
                 - string
                 - 'null'
-        meta:
-          $ref: '#/components/schemas/Meta_2'
-        error:
-          anyOf:
-          - $ref: '#/components/schemas/ApiError'
-          - type: 'null'
-    PhotographersResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Photographer_2'
-        meta:
-          $ref: '#/components/schemas/Meta_2'
-        error:
-          anyOf:
-          - $ref: '#/components/schemas/ApiError'
-          - type: 'null'
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
-    LicensesResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        data:
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-        meta:
-          $ref: '#/components/schemas/Meta_2'
-        error:
-          anyOf:
-          - $ref: '#/components/schemas/ApiError'
-          - type: 'null'
-    OrientationsResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        data:
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-        meta:
-          $ref: '#/components/schemas/Meta_2'
-        error:
-          anyOf:
-          - $ref: '#/components/schemas/ApiError'
-          - type: 'null'
-    Photographer_2:
-      type: object
-      properties:
-        username:
-          type: string
-        full_name:
-          type:
-          - string
-          - 'null'
-        source:
-          type: string
-        url:
-          type:
-          - string
-          - 'null'
-          format: uri
-        photos_count:
-          type: integer
-    Meta_2:
-      type: object
-      properties:
-        request_id:
-          type: string
-          description: Unique id for this request (quote it in support tickets).
-        took_ms:
-          type: number
-          description: Server processing time in milliseconds.
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
-    PhotographerResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Photographer_2'
         meta:
           $ref: '#/components/schemas/Meta_2'
         error:

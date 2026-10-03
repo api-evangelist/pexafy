@@ -221,32 +221,6 @@ components:
         plan: starter
         searches: 4120
         searches_limit: 10000
-    Meta:
-      type: object
-      properties:
-        request_id:
-          type: string
-        took_ms:
-          type: number
-          description: Server side time, excluding transfer.
-    UsageEnvelope:
-      type: object
-      required:
-      - success
-      - data
-      properties:
-        success:
-          type: boolean
-        data:
-          $ref: '#/components/schemas/Usage'
-        meta:
-          $ref: '#/components/schemas/Meta'
-      example:
-        success: true
-        data:
-          plan: starter
-          searches: 4120
-          searches_limit: 10000
     ErrorEnvelope:
       type: object
       required:
@@ -278,7 +252,33 @@ components:
               - string
               - 'null'
               description: Which parameter was rejected, when the failure is about one.
-    DailyUsageResponse:
+    Meta:
+      type: object
+      properties:
+        request_id:
+          type: string
+        took_ms:
+          type: number
+          description: Server side time, excluding transfer.
+    UsageEnvelope:
+      type: object
+      required:
+      - success
+      - data
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/Usage'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      example:
+        success: true
+        data:
+          plan: starter
+          searches: 4120
+          searches_limit: 10000
+    MonthlyUsageResponse:
       type: object
       properties:
         success:
@@ -286,17 +286,83 @@ components:
         data:
           type: object
           properties:
-            period_days:
+            period_months:
               type: integer
             records:
               type: array
               items:
                 type: object
                 properties:
-                  date:
+                  month:
                     type: string
+                    description: YYYY-MM
                   requests:
                     type: integer
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
+    Meta_2:
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: Unique id for this request (quote it in support tickets).
+        took_ms:
+          type: number
+          description: Server processing time in milliseconds.
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    UsageResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            period:
+              type: string
+              description: YYYY-MM
+            requests:
+              type: object
+              properties:
+                used:
+                  type: integer
+                limit:
+                  type: integer
+                remaining:
+                  type: integer
         meta:
           $ref: '#/components/schemas/Meta_2'
         error:
@@ -340,46 +406,7 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ApiError'
           - type: 'null'
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
-    Meta_2:
-      type: object
-      properties:
-        request_id:
-          type: string
-          description: Unique id for this request (quote it in support tickets).
-        took_ms:
-          type: number
-          description: Server processing time in milliseconds.
-    UsageResponse:
+    DailyUsageResponse:
       type: object
       properties:
         success:
@@ -387,42 +414,15 @@ components:
         data:
           type: object
           properties:
-            period:
-              type: string
-              description: YYYY-MM
-            requests:
-              type: object
-              properties:
-                used:
-                  type: integer
-                limit:
-                  type: integer
-                remaining:
-                  type: integer
-        meta:
-          $ref: '#/components/schemas/Meta_2'
-        error:
-          anyOf:
-          - $ref: '#/components/schemas/ApiError'
-          - type: 'null'
-    MonthlyUsageResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        data:
-          type: object
-          properties:
-            period_months:
+            period_days:
               type: integer
             records:
               type: array
               items:
                 type: object
                 properties:
-                  month:
+                  date:
                     type: string
-                    description: YYYY-MM
                   requests:
                     type: integer
         meta:
