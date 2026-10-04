@@ -188,6 +188,63 @@ paths:
       description: Production
 components:
   schemas:
+    Meta:
+      type: object
+      properties:
+        request_id:
+          type: string
+        took_ms:
+          type: number
+          description: Server side time, excluding transfer.
+    ErrorEnvelope:
+      type: object
+      required:
+      - success
+      - error
+      description: Every failure uses this shape, whatever the status code.
+      properties:
+        success:
+          type: boolean
+          enum:
+          - false
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              description: 'Machine readable and stable across versions. Branch on this, not on the message. The set is extensible: treat an unrecognised code as a generic failure of its status class.'
+              example: validation_failed
+            message:
+              type: string
+              description: Human readable, not stable.
+            request_id:
+              type: string
+            field:
+              type:
+              - string
+              - 'null'
+              description: Which parameter was rejected, when the failure is about one.
+    UsageEnvelope:
+      type: object
+      required:
+      - success
+      - data
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/Usage'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      example:
+        success: true
+        data:
+          plan: starter
+          searches: 4120
+          searches_limit: 10000
     Usage:
       type: object
       description: Quota counters for the calling key's account.
@@ -221,63 +278,6 @@ components:
         plan: starter
         searches: 4120
         searches_limit: 10000
-    ErrorEnvelope:
-      type: object
-      required:
-      - success
-      - error
-      description: Every failure uses this shape, whatever the status code.
-      properties:
-        success:
-          type: boolean
-          enum:
-          - false
-        error:
-          type: object
-          required:
-          - code
-          - message
-          properties:
-            code:
-              type: string
-              description: 'Machine readable and stable across versions. Branch on this, not on the message. The set is extensible: treat an unrecognised code as a generic failure of its status class.'
-              example: validation_failed
-            message:
-              type: string
-              description: Human readable, not stable.
-            request_id:
-              type: string
-            field:
-              type:
-              - string
-              - 'null'
-              description: Which parameter was rejected, when the failure is about one.
-    Meta:
-      type: object
-      properties:
-        request_id:
-          type: string
-        took_ms:
-          type: number
-          description: Server side time, excluding transfer.
-    UsageEnvelope:
-      type: object
-      required:
-      - success
-      - data
-      properties:
-        success:
-          type: boolean
-        data:
-          $ref: '#/components/schemas/Usage'
-        meta:
-          $ref: '#/components/schemas/Meta'
-      example:
-        success: true
-        data:
-          plan: starter
-          searches: 4120
-          searches_limit: 10000
     MonthlyUsageResponse:
       type: object
       properties:
@@ -304,45 +304,6 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ApiError'
           - type: 'null'
-    Meta_2:
-      type: object
-      properties:
-        request_id:
-          type: string
-          description: Unique id for this request (quote it in support tickets).
-        took_ms:
-          type: number
-          description: Server processing time in milliseconds.
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
     UsageResponse:
       type: object
       properties:
@@ -369,6 +330,15 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ApiError'
           - type: 'null'
+    Meta_2:
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: Unique id for this request (quote it in support tickets).
+        took_ms:
+          type: number
+          description: Server processing time in milliseconds.
     UsageByKeyResponse:
       type: object
       properties:
@@ -406,6 +376,50 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ApiError'
           - type: 'null'
+    ApiError:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code (e.g. `MISSING_PARAMS`, `PHOTO_NOT_FOUND`).
+        message:
+          type: string
+          description: Human-readable error message.
+        request_id:
+          type: string
+      required:
+      - code
+      - message
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
     DailyUsageResponse:
       type: object
       properties:
@@ -431,20 +445,6 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ApiError'
           - type: 'null'
-    ApiError:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Machine-readable error code (e.g. `MISSING_PARAMS`, `PHOTO_NOT_FOUND`).
-        message:
-          type: string
-          description: Human-readable error message.
-        request_id:
-          type: string
-      required:
-      - code
-      - message
   securitySchemes:
     apiKey:
       type: http
