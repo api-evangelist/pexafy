@@ -241,6 +241,9 @@ maintainers:
   LinkedIn: https://www.linkedin.com/company/pexafy
 aid: pexafy
 common:
+- type: CapabilityMap
+  url: capabilities/pexafy-capability-edges.yml
+  name: Pexafy Business Capability Map
 - type: Website
   url: https://www.pexafy.com/
 - type: MCPServer

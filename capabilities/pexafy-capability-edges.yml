@@ -1,0 +1,25 @@
+slug: pexafy
+provider: Pexafy
+generated_by: planning/capability-mapping/scripts/classify_capabilities.py
+model: claude-opus-5
+frame:
+- Software & Technology
+min_confidence: 0.7
+capability_model:
+  source: https://github.com/vincentmakes/turbo-ea-capabilities
+  license: CC-BY-4.0
+  attribution: Turbo EA Capabilities by Vincent Verdet — Turbo EA, https://github.com/vincentmakes/turbo-ea-capabilities,
+    CC BY 4.0
+  notice: NOTICE
+edge_count: 1
+edges:
+- tag: Usage
+  spec_file: pexafy-usage-api-openapi.yml
+  capability_id: BC-4270.50
+  capability_id_l1: BC-4270
+  capability_name: API Consumption Governance
+  confidence: 0.75
+  evidence: GET /usage getUsage Quota counters for the current period; GET /api/v1/usage/by-key get_usage_by_key_api_v1_usage_by_key_get
+    Usage by API key
+  reason: Operations report API consumption quota counters and per-API-key usage, which is API consumption
+    governance (quotas, rate limits, usage analytics) on the vendor's developer platform.
