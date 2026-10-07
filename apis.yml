@@ -241,6 +241,8 @@ maintainers:
   LinkedIn: https://www.linkedin.com/company/pexafy
 aid: pexafy
 common:
+- type: Pricing
+  url: https://pexafy.com/pricing/
 - type: CapabilityMap
   url: capabilities/pexafy-capability-edges.yml
   name: Pexafy Business Capability Map
