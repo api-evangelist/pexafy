@@ -130,3 +130,19 @@ rendering:
   note: Results are returned as a numbered thumbnail grid rendered inline in the conversation, and in
     MCP Apps-capable clients a thumbnail opens a detail panel from data already in the tool result — no
     second call.
+rfc9728:
+  endpoint: https://mcp.pexafy.com/mcp
+  metadata_url: https://mcp.pexafy.com/.well-known/oauth-protected-resource/mcp
+  discovered_via: WWW-Authenticate resource_metadata on an anonymous POST initialize
+  fetched: '2026-09-25'
+  http_status: 200
+  content_type: application/json
+  document:
+    resource: https://mcp.pexafy.com/mcp
+    authorization_servers:
+    - https://pexafy.com/
+    scopes_supported:
+    - read
+    bearer_methods_supported:
+    - header
+    resource_name: Pexafy MCP
