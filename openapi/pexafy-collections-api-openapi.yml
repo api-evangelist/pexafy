@@ -648,6 +648,50 @@ paths:
       description: Production
 components:
   schemas:
+    CollectionItemEnvelope:
+      type: object
+      required:
+      - success
+      - data
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/CollectionItem'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      example:
+        success: true
+        data:
+          id: 5
+          photo_id: 0192f3a1-6c1e-7a3b-9f2d-4c8e1b5a7d20
+    CollectionEnvelope:
+      type: object
+      required:
+      - success
+      - data
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/Collection'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      example:
+        success: true
+        data:
+          id: 8814
+          name: office interiors
+          is_public: false
+          photos_count: 37
+    Meta:
+      type: object
+      properties:
+        request_id:
+          type: string
+        took_ms:
+          type: number
+          description: Server side time, excluding transfer.
     CollectionInput:
       type: object
       required:
@@ -700,14 +744,6 @@ components:
       example:
         id: 5
         photo_id: 0192f3a1-6c1e-7a3b-9f2d-4c8e1b5a7d20
-    Meta:
-      type: object
-      properties:
-        request_id:
-          type: string
-        took_ms:
-          type: number
-          description: Server side time, excluding transfer.
     ErrorEnvelope:
       type: object
       required:
@@ -739,42 +775,6 @@ components:
               - string
               - 'null'
               description: Which parameter was rejected, when the failure is about one.
-    CollectionEnvelope:
-      type: object
-      required:
-      - success
-      - data
-      properties:
-        success:
-          type: boolean
-        data:
-          $ref: '#/components/schemas/Collection'
-        meta:
-          $ref: '#/components/schemas/Meta'
-      example:
-        success: true
-        data:
-          id: 8814
-          name: office interiors
-          is_public: false
-          photos_count: 37
-    CollectionItemEnvelope:
-      type: object
-      required:
-      - success
-      - data
-      properties:
-        success:
-          type: boolean
-        data:
-          $ref: '#/components/schemas/CollectionItem'
-        meta:
-          $ref: '#/components/schemas/Meta'
-      example:
-        success: true
-        data:
-          id: 5
-          photo_id: 0192f3a1-6c1e-7a3b-9f2d-4c8e1b5a7d20
     Collection:
       type: object
       required:
@@ -835,6 +835,24 @@ components:
           name: office interiors
           is_public: false
           photos_count: 37
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Meta_2:
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: Unique id for this request (quote it in support tickets).
+        took_ms:
+          type: number
+          description: Server processing time in milliseconds.
     CollectionItemResponse:
       type: object
       properties:
@@ -848,22 +866,28 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ApiError'
           - type: 'null'
-    DeletedResponse:
+    CollectionItem_2:
       type: object
       properties:
-        success:
-          type: boolean
-        data:
-          type: object
-          properties:
-            deleted:
-              type: boolean
-        meta:
-          $ref: '#/components/schemas/Meta_2'
-        error:
-          anyOf:
-          - $ref: '#/components/schemas/ApiError'
-          - type: 'null'
+        id:
+          type: integer
+        photo_id:
+          type: string
+        photo_thumbnail_url:
+          type:
+          - string
+          - 'null'
+        photo_source:
+          type:
+          - string
+          - 'null'
+        photo_photographer:
+          type:
+          - string
+          - 'null'
+        added_at:
+          type: string
+          format: date-time
     AddPhotoBody:
       properties:
         photo_id:
@@ -893,66 +917,6 @@ components:
       required:
       - photo_id
       title: AddPhotoBody
-    CollectionListResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Collection_2'
-        meta:
-          $ref: '#/components/schemas/Meta_2'
-        error:
-          anyOf:
-          - $ref: '#/components/schemas/ApiError'
-          - type: 'null'
-    CollectionItem_2:
-      type: object
-      properties:
-        id:
-          type: integer
-        photo_id:
-          type: string
-        photo_thumbnail_url:
-          type:
-          - string
-          - 'null'
-        photo_source:
-          type:
-          - string
-          - 'null'
-        photo_photographer:
-          type:
-          - string
-          - 'null'
-        added_at:
-          type: string
-          format: date-time
-    Meta_2:
-      type: object
-      properties:
-        request_id:
-          type: string
-          description: Unique id for this request (quote it in support tickets).
-        took_ms:
-          type: number
-          description: Server processing time in milliseconds.
-    ApiError:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Machine-readable error code (e.g. `MISSING_PARAMS`, `PHOTO_NOT_FOUND`).
-        message:
-          type: string
-          description: Human-readable error message.
-        request_id:
-          type: string
-      required:
-      - code
-      - message
     CollectionCreateBody:
       properties:
         name:
@@ -974,6 +938,20 @@ components:
       required:
       - name
       title: CollectionCreateBody
+    ApiError:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code (e.g. `MISSING_PARAMS`, `PHOTO_NOT_FOUND`).
+        message:
+          type: string
+          description: Human-readable error message.
+        request_id:
+          type: string
+      required:
+      - code
+      - message
     Collection_2:
       type: object
       properties:
@@ -997,15 +975,57 @@ components:
           format: date-time
         photos_count:
           type: integer
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
+    DeletedResponse:
       type: object
-      title: HTTPValidationError
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            deleted:
+              type: boolean
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
+    CollectionListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Collection_2'
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
+    CollectionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          allOf:
+          - $ref: '#/components/schemas/Collection_2'
+          - type: object
+            properties:
+              photos:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CollectionItem_2'
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
     ValidationError:
       properties:
         loc:
@@ -1027,26 +1047,6 @@ components:
       - msg
       - type
       title: ValidationError
-    CollectionResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        data:
-          allOf:
-          - $ref: '#/components/schemas/Collection_2'
-          - type: object
-            properties:
-              photos:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CollectionItem_2'
-        meta:
-          $ref: '#/components/schemas/Meta_2'
-        error:
-          anyOf:
-          - $ref: '#/components/schemas/ApiError'
-          - type: 'null'
   securitySchemes:
     apiKey:
       type: http

@@ -532,6 +532,23 @@ paths:
       description: Production
 components:
   schemas:
+    Facet:
+      type: object
+      required:
+      - value
+      description: One allowed value of a filter, with how much of the catalogue it covers. Read these rather than hard coding the lists.
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+        count:
+          type: integer
+          minimum: 0
+      example:
+        value: blue
+        label: Blue
+        count: 1840221
     Source:
       type: string
       enum:
@@ -541,20 +558,14 @@ components:
       - wikimedia
       x-extensible-enum: true
       description: 'Upstream library. Extensible: this list grows as libraries are indexed, so parse it as an open string.'
-    FacetEnvelope:
+    Meta:
       type: object
-      required:
-      - success
-      - data
       properties:
-        success:
-          type: boolean
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Facet'
-        meta:
-          $ref: '#/components/schemas/Meta'
+        request_id:
+          type: string
+        took_ms:
+          type: number
+          description: Server side time, excluding transfer.
     Photographer:
       type: object
       required:
@@ -580,14 +591,6 @@ components:
         username: a-photographer
         source: unsplash
         photos_count: 412
-    Meta:
-      type: object
-      properties:
-        request_id:
-          type: string
-        took_ms:
-          type: number
-          description: Server side time, excluding transfer.
     ErrorEnvelope:
       type: object
       required:
@@ -619,23 +622,6 @@ components:
               - string
               - 'null'
               description: Which parameter was rejected, when the failure is about one.
-    Facet:
-      type: object
-      required:
-      - value
-      description: One allowed value of a filter, with how much of the catalogue it covers. Read these rather than hard coding the lists.
-      properties:
-        value:
-          type: string
-        label:
-          type: string
-        count:
-          type: integer
-          minimum: 0
-      example:
-        value: blue
-        label: Blue
-        count: 1840221
     PhotographerEnvelope:
       type: object
       required:
@@ -656,25 +642,30 @@ components:
         - username: a-photographer
           source: unsplash
           photos_count: 412
-    OrientationsResponse:
+    FacetEnvelope:
       type: object
+      required:
+      - success
+      - data
       properties:
         success:
           type: boolean
         data:
           type: array
           items:
-            type: object
-            properties:
-              name:
-                type: string
+            $ref: '#/components/schemas/Facet'
         meta:
-          $ref: '#/components/schemas/Meta_2'
-        error:
-          anyOf:
-          - $ref: '#/components/schemas/ApiError'
-          - type: 'null'
-    ColorsResponse:
+          $ref: '#/components/schemas/Meta'
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    PhotographersResponse:
       type: object
       properties:
         success:
@@ -682,34 +673,7 @@ components:
         data:
           type: array
           items:
-            type: object
-            properties:
-              name:
-                type: string
-              hex:
-                type: string
-        meta:
-          $ref: '#/components/schemas/Meta_2'
-        error:
-          anyOf:
-          - $ref: '#/components/schemas/ApiError'
-          - type: 'null'
-    SourcesResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        data:
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-              license_url:
-                type:
-                - string
-                - 'null'
+            $ref: '#/components/schemas/Photographer_2'
         meta:
           $ref: '#/components/schemas/Meta_2'
         error:
@@ -717,6 +681,33 @@ components:
           - $ref: '#/components/schemas/ApiError'
           - type: 'null'
     LicensesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
+    Meta_2:
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: Unique id for this request (quote it in support tickets).
+        took_ms:
+          type: number
+          description: Server processing time in milliseconds.
+    OrientationsResponse:
       type: object
       properties:
         success:
@@ -767,16 +758,7 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ApiError'
           - type: 'null'
-    Meta_2:
-      type: object
-      properties:
-        request_id:
-          type: string
-          description: Unique id for this request (quote it in support tickets).
-        took_ms:
-          type: number
-          description: Server processing time in milliseconds.
-    PhotographersResponse:
+    SourcesResponse:
       type: object
       properties:
         success:
@@ -784,7 +766,14 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Photographer_2'
+            type: object
+            properties:
+              name:
+                type: string
+              license_url:
+                type:
+                - string
+                - 'null'
         meta:
           $ref: '#/components/schemas/Meta_2'
         error:
@@ -805,15 +794,26 @@ components:
       required:
       - code
       - message
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
+    ColorsResponse:
       type: object
-      title: HTTPValidationError
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              hex:
+                type: string
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/ApiError'
+          - type: 'null'
     ValidationError:
       properties:
         loc:
